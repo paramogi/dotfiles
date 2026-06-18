@@ -42,6 +42,7 @@
 #include <wlr/types/wlr_output_power_management_v1.h>
 #include <wlr/types/wlr_pointer.h>
 #include <wlr/types/wlr_pointer_constraints_v1.h>
+#include <wlr/types/wlr_pointer_gestures_v1.h>
 #include <wlr/types/wlr_presentation_time.h>
 #include <wlr/types/wlr_primary_selection.h>
 #include <wlr/types/wlr_primary_selection_v1.h>
@@ -53,6 +54,7 @@
 #include <wlr/types/wlr_session_lock_v1.h>
 #include <wlr/types/wlr_single_pixel_buffer_v1.h>
 #include <wlr/types/wlr_subcompositor.h>
+#include <wlr/types/wlr_touch.h>
 #include <wlr/types/wlr_viewporter.h>
 #include <wlr/types/wlr_virtual_keyboard_v1.h>
 #include <wlr/types/wlr_virtual_pointer_v1.h>
@@ -169,6 +171,12 @@ typedef struct {
 	struct wl_listener destroy;
 } KeyboardGroup;
 
+typedef struct TouchGroup {
+	struct wl_list link;
+	struct wlr_touch *touch;
+	Monitor *m;
+} TouchGroup;
+
 typedef struct {
 	/* Must keep this field first */
 	unsigned int type; /* LayerShell */
@@ -281,6 +289,14 @@ static void bufdataend(struct wlr_buffer *buffer);
 static Buffer *bufmon(Monitor *m);
 static void bufrelease(struct wl_listener *listener, void *data);
 static void buttonpress(struct wl_listener *listener, void *data);
+static void swipe_begin(struct wl_listener *listener, void *data);
+static void swipe_update(struct wl_listener *listener, void *data);
+static void swipe_end(struct wl_listener *listener, void *data);
+static void pinch_begin(struct wl_listener *listener, void *data);
+static void pinch_update(struct wl_listener *listener, void *data);
+static void pinch_end(struct wl_listener *listener, void *data);
+static void hold_begin(struct wl_listener *listener, void *data);
+static void hold_end(struct wl_listener *listener, void *data);
 static void chvt(const Arg *arg);
 static void checkidleinhibitor(struct wlr_surface *exclude);
 static void cleanup(void);
@@ -301,7 +317,9 @@ static void createnotify(struct wl_listener *listener, void *data);
 static void createpointer(struct wlr_pointer *pointer);
 static void createpointerconstraint(struct wl_listener *listener, void *data);
 static void createpopup(struct wl_listener *listener, void *data);
+static void createtouch(struct wlr_touch *touch);
 static void cursorconstrain(struct wlr_pointer_constraint_v1 *constraint);
+static void createtouch(struct wlr_touch *touch);
 static void cursorframe(struct wl_listener *listener, void *data);
 static void cursorwarptohint(void);
 static void destroydecoration(struct wl_listener *listener, void *data);
@@ -374,6 +392,10 @@ static void togglefloating(const Arg *arg);
 static void togglefullscreen(const Arg *arg);
 static void toggletag(const Arg *arg);
 static void toggleview(const Arg *arg);
+static void touchdown(struct wl_listener *listener, void *data);
+static void touchup(struct wl_listener *listener, void *data);
+static void touchframe(struct wl_listener *listener, void *data);
+static void touchmotion(struct wl_listener *listener, void *data);
 static void unlocksession(struct wl_listener *listener, void *data);
 static void unmaplayersurfacenotify(struct wl_listener *listener, void *data);
 static void unmapnotify(struct wl_listener *listener, void *data);
@@ -419,6 +441,7 @@ static struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
 static struct wlr_virtual_pointer_manager_v1 *virtual_pointer_mgr;
 static struct wlr_cursor_shape_manager_v1 *cursor_shape_mgr;
 static struct wlr_output_power_manager_v1 *power_mgr;
+static struct wlr_pointer_gestures_v1 *pointer_gestures;
 
 static struct wlr_pointer_constraints_v1 *pointer_constraints;
 static struct wlr_relative_pointer_manager_v1 *relative_pointer_mgr;
@@ -442,6 +465,7 @@ static struct wlr_output_layout *output_layout;
 static struct wlr_box sgeom;
 static struct wl_list mons;
 static Monitor *selmon;
+static struct wl_list touches;
 
 static char stext[256];
 static struct wl_event_source *status_event_source;
@@ -480,6 +504,10 @@ static struct wl_listener request_set_sel = {.notify = setsel};
 static struct wl_listener request_set_cursor_shape = {.notify = setcursorshape};
 static struct wl_listener request_start_drag = {.notify = requeststartdrag};
 static struct wl_listener start_drag = {.notify = startdrag};
+static struct wl_listener touch_down = {.notify = touchdown};
+static struct wl_listener touch_frame = {.notify = touchframe};
+static struct wl_listener touch_motion = {.notify = touchmotion};
+static struct wl_listener touch_up = {.notify = touchup};
 static struct wl_listener new_session_lock = {.notify = locksession};
 
 #ifdef XWAYLAND
@@ -850,6 +878,122 @@ buttonpress(struct wl_listener *listener, void *data)
 }
 
 void
+swipe_begin(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_swipe_begin_event *event = data;
+
+	// Forward swipe begin event to client
+	wlr_pointer_gestures_v1_send_swipe_begin(
+		pointer_gestures, 
+		seat,
+		event->time_msec,
+		event->fingers
+	);
+}
+
+void
+swipe_update(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_swipe_update_event *event = data;
+
+	// Forward swipe update event to client
+	wlr_pointer_gestures_v1_send_swipe_update(
+		pointer_gestures, 
+		seat,
+		event->time_msec,
+		event->dx,
+		event->dy
+	);
+}
+
+void
+swipe_end(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_swipe_end_event *event = data;
+
+	// Forward swipe end event to client
+	wlr_pointer_gestures_v1_send_swipe_end(
+		pointer_gestures, 
+		seat,
+		event->time_msec,
+		event->cancelled
+	);
+}
+
+void
+pinch_begin(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_pinch_begin_event *event = data;
+
+	// Forward pinch begin event to client
+	wlr_pointer_gestures_v1_send_pinch_begin(
+		pointer_gestures, 
+		seat,
+		event->time_msec,
+		event->fingers
+	);
+}
+
+void
+pinch_update(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_pinch_update_event *event = data;
+
+	// Forward pinch update event to client
+	wlr_pointer_gestures_v1_send_pinch_update(
+		pointer_gestures,
+		seat,
+		event->time_msec,
+		event->dx,
+		event->dy,
+		event->scale,
+		event->rotation
+	);
+}
+
+void
+pinch_end(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_pinch_end_event *event = data;
+
+	// Forward pinch end event to client
+	wlr_pointer_gestures_v1_send_pinch_end(
+		pointer_gestures,
+		seat,
+		event->time_msec,
+		event->cancelled
+	);
+}
+
+void
+hold_begin(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_hold_begin_event *event = data;
+
+	// Forward hold begin event to client
+	wlr_pointer_gestures_v1_send_hold_begin(
+		pointer_gestures,
+		seat,
+		event->time_msec,
+		event->fingers
+	);
+}
+
+void
+hold_end(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_hold_end_event *event = data;
+
+	// Forward hold end event to client
+	wlr_pointer_gestures_v1_send_hold_end(
+		pointer_gestures,
+		seat,
+		event->time_msec,
+		event->cancelled
+	);
+}
+
+void
 chvt(const Arg *arg)
 {
 	wlr_session_change_vt(session, arg->ui);
@@ -978,6 +1122,10 @@ cleanuplisteners(void)
 	wl_list_remove(&request_set_cursor_shape.link);
 	wl_list_remove(&request_start_drag.link);
 	wl_list_remove(&start_drag.link);
+	wl_list_remove(&touch_down.link);
+	wl_list_remove(&touch_frame.link);
+	wl_list_remove(&touch_motion.link);
+	wl_list_remove(&touch_up.link);
 	wl_list_remove(&new_session_lock.link);
 #ifdef XWAYLAND
 	wl_list_remove(&new_xwayland_surface.link);
@@ -1054,6 +1202,8 @@ commitnotify(struct wl_listener *listener, void *data)
 {
 	Client *c = wl_container_of(listener, c, commit);
 
+	if (!c->surface.xdg->initialized) return;
+
 	if (c->surface.xdg->initial_commit) {
 		/*
 		 * Get the monitor this client will be rendered on
@@ -1072,6 +1222,7 @@ commitnotify(struct wl_listener *listener, void *data)
 		if (c->decoration)
 			requestdecorationmode(&c->set_decoration_mode, c->decoration);
 		wlr_xdg_toplevel_set_size(c->surface.xdg->toplevel, 0, 0);
+		client_set_tiled(c, WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT | WLR_EDGE_RIGHT);
 		return;
 	}
 
@@ -1401,6 +1552,16 @@ createpopup(struct wl_listener *listener, void *data)
 	 * creates a new popup. */
 	struct wlr_xdg_popup *popup = data;
 	LISTEN_STATIC(&popup->base->surface->events.commit, commitpopup);
+}
+
+void
+createtouch(struct wlr_touch *wlr_touch)
+{
+	TouchGroup *touch = ecalloc(1, sizeof(TouchGroup));
+
+	touch->touch = wlr_touch;
+	wl_list_insert(&touches, &touch->link);
+	wlr_cursor_attach_input_device(cursor, &wlr_touch->base);
 }
 
 void
@@ -1882,6 +2043,9 @@ inputdevice(struct wl_listener *listener, void *data)
 	case WLR_INPUT_DEVICE_POINTER:
 		createpointer(wlr_pointer_from_input_device(device));
 		break;
+	case WLR_INPUT_DEVICE_TOUCH:
+		createtouch(wlr_touch_from_input_device(device));
+		break;
 	default:
 		/* TODO handle other input device types */
 		break;
@@ -1894,6 +2058,8 @@ inputdevice(struct wl_listener *listener, void *data)
 	caps = WL_SEAT_CAPABILITY_POINTER;
 	if (!wl_list_empty(&kb_group->wlr_group->devices))
 		caps |= WL_SEAT_CAPABILITY_KEYBOARD;
+	if (!wl_list_empty(&touches))
+		caps |= WL_SEAT_CAPABILITY_TOUCH;
 	wlr_seat_set_capabilities(seat, caps);
 }
 
@@ -2865,6 +3031,13 @@ setup(void)
 	wl_signal_add(&cursor->events.axis, &cursor_axis);
 	wl_signal_add(&cursor->events.frame, &cursor_frame);
 
+	wl_list_init(&touches);
+
+	wl_signal_add(&cursor->events.touch_down, &touch_down);
+	wl_signal_add(&cursor->events.touch_frame, &touch_frame);
+	wl_signal_add(&cursor->events.touch_motion, &touch_motion);
+	wl_signal_add(&cursor->events.touch_up, &touch_up);
+
 	cursor_shape_mgr = wlr_cursor_shape_manager_v1_create(dpy, 1);
 	wl_signal_add(&cursor_shape_mgr->events.request_set_shape, &request_set_cursor_shape);
 
@@ -2881,6 +3054,16 @@ setup(void)
 	virtual_pointer_mgr = wlr_virtual_pointer_manager_v1_create(dpy);
     wl_signal_add(&virtual_pointer_mgr->events.new_virtual_pointer,
             &new_virtual_pointer);
+
+	pointer_gestures = wlr_pointer_gestures_v1_create(dpy);
+	LISTEN_STATIC(&cursor->events.swipe_begin, swipe_begin);
+	LISTEN_STATIC(&cursor->events.swipe_update, swipe_update);
+	LISTEN_STATIC(&cursor->events.swipe_end, swipe_end);
+	LISTEN_STATIC(&cursor->events.pinch_begin, pinch_begin);
+	LISTEN_STATIC(&cursor->events.pinch_update, pinch_update);
+	LISTEN_STATIC(&cursor->events.pinch_end, pinch_end);
+	LISTEN_STATIC(&cursor->events.hold_begin, hold_begin);
+	LISTEN_STATIC(&cursor->events.hold_end, hold_end);
 
 	seat = wlr_seat_create(dpy, "seat0");
 	wl_signal_add(&seat->events.request_set_cursor, &request_cursor);
@@ -3076,6 +3259,120 @@ toggleview(const Arg *arg)
 	arrange(selmon);
 	drawbars();
 }
+
+void
+touchdown(struct wl_listener *listener, void *data)
+{
+	struct wlr_touch_down_event *event = data;
+	double lx, ly;
+	double sx, sy;
+	struct wlr_surface *surface;
+	Client *c = NULL;
+	uint32_t serial = 0;
+	Monitor *m;
+
+	wlr_idle_notifier_v1_notify_activity(idle_notifier, seat);
+
+	// Map the input to the appropriate output, to ensure that rotation is
+	// handled.
+	wl_list_for_each(m, &mons, link) {
+		if (m == NULL || m->wlr_output == NULL) {
+			continue;
+		}
+		if (event->touch->output_name != NULL && 0 != strcmp(event->touch->output_name, m->wlr_output->name)) {
+			continue;
+		}
+
+		wlr_cursor_map_input_to_output(cursor, &event->touch->base, m->wlr_output);
+	}
+
+	wlr_cursor_absolute_to_layout_coords(cursor, &event->touch->base, event->x, event->y, &lx, &ly);
+
+	/* Find the client under the pointer and send the event along. */
+	xytonode(lx, ly, &surface, &c, NULL, &sx, &sy);
+	if (sloppyfocus)
+		focusclient(c, 0);
+
+	if (surface != NULL) {
+		serial = wlr_seat_touch_notify_down(seat, surface, event->time_msec, event->touch_id, sx, sy);
+	}
+
+	if (serial && wlr_seat_touch_num_points(seat) == 1) {
+		/* Emulate a mouse click if the touch event wasn't handled */
+		struct wlr_pointer_button_event *button_event = data;
+		struct wlr_pointer_motion_absolute_event *motion_event = data;
+		double dx, dy;
+
+		wlr_cursor_absolute_to_layout_coords(cursor, &motion_event->pointer->base, motion_event->x, motion_event->y, &lx, &ly);
+		wlr_cursor_warp_closest(cursor, &motion_event->pointer->base, lx, ly);
+		dx = lx - cursor->x;
+		dy = ly - cursor->y;
+		motionnotify(motion_event->time_msec, &motion_event->pointer->base, dx, dy, dx, dy);
+
+		button_event->button = BTN_LEFT;
+		button_event->state = WL_POINTER_BUTTON_STATE_PRESSED;
+		buttonpress(listener, button_event);
+	}
+}
+
+void
+touchup(struct wl_listener *listener, void *data)
+{
+	struct wlr_touch_up_event *event = data;
+
+	if (!wlr_seat_touch_get_point(seat, event->touch_id)) {
+		return;
+	}
+
+	if (wlr_seat_touch_num_points(seat) == 1) {
+		struct wlr_pointer_button_event *button_event = data;
+
+		button_event->button = BTN_LEFT;
+		button_event->state = WL_POINTER_BUTTON_STATE_RELEASED;
+		buttonpress(listener, button_event);
+	}
+
+	wlr_seat_touch_notify_up(seat, event->time_msec, event->touch_id);
+	wlr_idle_notifier_v1_notify_activity(idle_notifier, seat);
+}
+
+void
+touchframe(struct wl_listener *listener, void *data)
+{
+	wlr_seat_touch_notify_frame(seat);
+	wlr_idle_notifier_v1_notify_activity(idle_notifier, seat);
+}
+
+void
+touchmotion(struct wl_listener *listener, void *data)
+{
+	struct wlr_touch_motion_event *event = data;
+	double lx, ly;
+	double sx, sy;
+	struct wlr_surface *surface;
+	Client *c = NULL;
+
+	if (!wlr_seat_touch_get_point(seat, event->touch_id)) {
+		return;
+	}
+
+	wlr_cursor_absolute_to_layout_coords(cursor, &event->touch->base, event->x, event->y, &lx, &ly);
+	xytonode(lx, ly, &surface, &c, NULL, &sx, &sy);
+
+	if (c != NULL && surface != NULL) {
+		if (sloppyfocus)
+			focusclient(c, 0);
+		wlr_seat_touch_point_focus(seat, surface, event->time_msec, event->touch_id, sx, sy);
+	} else {
+		if (sloppyfocus)
+			focusclient(NULL, 0);
+		wlr_seat_touch_point_clear_focus(seat, event->time_msec, event->touch_id);
+	}
+	wlr_seat_touch_notify_motion(seat, event->time_msec, event->touch_id, sx, sy);
+
+	wlr_idle_notifier_v1_notify_activity(idle_notifier, seat);
+}
+
 
 void
 unlocksession(struct wl_listener *listener, void *data)
