@@ -3,7 +3,7 @@
                         ((hex >> 16) & 0xFF) / 255.0f, \
                         ((hex >> 8) & 0xFF) / 255.0f, \
                         (hex & 0xFF) / 255.0f }
-#define SHCMD(cmd)    { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
+
 /* appearance */
 static const int sloppyfocus               = 1;  /* focus follows mouse */
 static const int bypass_surface_visibility = 0;  /* 1 means idle inhibitors will disable idle tracking even if it's surface isn't visible  */
@@ -184,6 +184,7 @@ static const Key keys[] = {
 	{ 0, XKB_KEY_XF86AudioMicMute,      spawn, SHCMD("wpctl set-mute @DEFAULT_SOURCE@ toggle") },
 	{ 0, XKB_KEY_XF86MonBrightnessUp,   spawn, SHCMD("brightnessctl set 5%+") },
 	{ 0, XKB_KEY_XF86MonBrightnessDown, spawn, SHCMD("brightnessctl set 5%-") },
+	{ WLR_MODIFIER_SHIFT,XKB_KEY_Print, spawn, SHCMD("mkdir -p ~/Pictures/Screenshots && grim -g \"$(slurp)\" \"~/Pictures/Screenshots/$(date +'%m-%d-%Y-%H%M%S').png\"") },
 	{ 0, XKB_KEY_Print,                 spawn, SHCMD("grim -g \"$(slurp)\" - | wl-copy") },
 
 	/* Ctrl-Alt-Backspace and Ctrl-Alt-Fx used to be handled by X server */
