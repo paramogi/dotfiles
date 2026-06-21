@@ -145,4 +145,4 @@ i use `font-lora` from google fonts for serif font.
 
 #### librewolf
 
-i had to manually change `font.name-list.monospace.x-{unicode, western}` to `Iosevka Term Extended` because, even though i specifically define it in [fontconfig](./.config/fontconfig/fonts.conf), librewolf defaults to Iosevka Regular
+i had to manually change `font.name-list.monospace.x-{unicode, western}` to `Iosevka Term Extended` in about:config because, even though i specifically define it in [fontconfig](./.config/fontconfig/fonts.conf), librewolf defaults to Iosevka Regular
