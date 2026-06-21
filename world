@@ -25,6 +25,7 @@ font-iosevka-base
 font-noto-cjk
 font-noto-emoji
 foot
+fprintd
 gcc
 git
 greetd
@@ -40,6 +41,7 @@ linux-firmware-mediatek
 linux-firmware-other
 linux-firmware-rtl_bt
 linux-lts
+linux-pam
 linux-stable-mic
 linux-stable-mic-doc
 lsblk
@@ -68,7 +70,6 @@ systemd-efistub
 thinkfan
 udev-init-scripts
 udev-init-scripts-openrc
-udisks2
 wayland
 wayland-protocols
 wireless-regdb
@@ -80,4 +81,3 @@ wpa_supplicant
 xdg-desktop-portal
 xdg-desktop-portal-wlr
 zip
-zzz
