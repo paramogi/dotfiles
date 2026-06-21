@@ -160,3 +160,87 @@ i use `font-lora` from google fonts for serif font.
 #### librewolf
 
 i had to manually change `font.name-list.monospace.x-{unicode, western}` to `Iosevka Term Extended` in about:config because, even though i specifically define it in [fontconfig](./.config/fontconfig/fonts.conf), librewolf defaults to Iosevka Regular
+
+
+#### power control
+
+my laptop sadly doesnt implement s3 sleep, so i have to resort to hibernation.
+
+with the pkg `acpid`, which provides `/etc/acpi/handler.sh`, i changed it to hibernate on click of power button, lid close and low battery (5% threshold)
+
+scripts: \
+`/etc/acpi/handler.sh`:
+
+```ash
+#!/bin/sh
+
+PATH="/usr/share/acpid:$PATH"
+alias log='logger -t acpid'
+
+hibernate() {
+	echo disk > /sys/power/state
+}
+
+# <dev-class>:<dev-name>:<notif-value>:<sup-value>
+case "$1:$2:$3:$4" in
+button/power*)
+	log 'Power button pressed'
+	hibernate
+;;
+button/sleep*)
+	log 'Sleep button pressed'
+	hibernate
+;;
+button/lid*)
+	log 'Lid closed'
+	lid-closed && hibernate
+;;
+esac
+
+exit 0
+```
+
+`/etc/init.d/battery-hibernate`:
+
+```ash
+#!/sbin/openrc-run
+
+name="battery-hibernate"
+description="Hibernate on critically low battery"
+
+command="/usr/local/bin/battery-hibernate-watch"
+command_background=true
+pidfile="/run/$RC_SVCNAME.pid"
+
+depend() {
+	need localmount
+	after acpid
+}
+```
+
+
+`/usr/local/bin/battery-hibernate-watch`:
+
+```ash
+#!/bin/sh
+
+THRESHOLD=${BATT_THRESHOLD:-5}
+INTERVAL=${BATT_INTERVAL:-30}
+
+bat=
+for b in /sys/class/power_supply/BAT*; do
+	[ -e "$b/capacity" ] && { bat=$b; break; }
+done
+[ -n "$bat" ] || { logger "battery-watch: no battery found"; exit 1; }
+
+while :; do
+	read -r cap    < "$bat/capacity"
+	read -r status < "$bat/status"
+	if [ "$status" = "Discharging" ] && [ "${cap:-100}" -le "$THRESHOLD" ]; then
+		logger "battery-watch: ${cap}% discharging — hibernating"
+		echo disk > /sys/power/state
+		sleep 60
+	fi
+	sleep "$INTERVAL"
+done
+```
