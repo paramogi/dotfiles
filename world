@@ -59,6 +59,7 @@ pipewire-alsa
 pipewire-jack
 pipewire-pulse
 pkgconf
+polkit
 seatd
 secureboot-hook
 slurp
@@ -67,6 +68,7 @@ systemd-efistub
 thinkfan
 udev-init-scripts
 udev-init-scripts-openrc
+udisks2
 wayland
 wayland-protocols
 wireless-regdb
