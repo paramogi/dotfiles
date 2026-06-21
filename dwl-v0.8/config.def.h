@@ -9,7 +9,7 @@ static const int sloppyfocus               = 1;  /* focus follows mouse */
 static const int bypass_surface_visibility = 0;  /* 1 means idle inhibitors will disable idle tracking even if it's surface isn't visible  */
 static const unsigned int borderpx         = 0;  /* border pixel of windows */
 static const int showbar                   = 1; /* 0 means no bar */
-static const int topbar                    = 1; /* 0 means bottom bar */
+static const int topbar                    = 0; /* 0 means bottom bar */
 static const char *fonts[]                 = {"Iosevka Term Extended:size=12"};
 static const float rootcolor[]             = COLOR(0x000000ff);
 /* This conforms to the xdg-protocol. Set the alpha to zero to restore the old behavior */
@@ -184,8 +184,8 @@ static const Key keys[] = {
 	{ 0, XKB_KEY_XF86AudioMicMute,      spawn, SHCMD("wpctl set-mute @DEFAULT_SOURCE@ toggle") },
 	{ 0, XKB_KEY_XF86MonBrightnessUp,   spawn, SHCMD("brightnessctl set 5%+") },
 	{ 0, XKB_KEY_XF86MonBrightnessDown, spawn, SHCMD("brightnessctl set 5%-") },
-	{ WLR_MODIFIER_SHIFT,XKB_KEY_Print, spawn, SHCMD("mkdir -p ~/Pictures/Screenshots && grim -g \"$(slurp)\" \"~/Pictures/Screenshots/$(date +'%m-%d-%Y-%H%M%S').png\"") },
-	{ 0, XKB_KEY_Print,                 spawn, SHCMD("grim -g \"$(slurp)\" - | wl-copy") },
+	{ 0, XKB_KEY_Print,                 spawn, SHCMD("grim -g \"$(slurp)\" - | wl-copy --type image/png") },
+	{ WLR_MODIFIER_SHIFT,XKB_KEY_Print, spawn, SHCMD("grim -g \"$(slurp)\" - | tee ~/Pictures/Screenshots/$(date +'%d%m%Y-%H%M%S').png | wl-copy --type image/png") },
 
 	/* Ctrl-Alt-Backspace and Ctrl-Alt-Fx used to be handled by X server */
 	{ WLR_MODIFIER_CTRL|WLR_MODIFIER_ALT,XKB_KEY_Terminate_Server, quit, {0} },
