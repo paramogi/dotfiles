@@ -116,13 +116,13 @@ to share the theme with the portals, where other apps also read from, add a `.co
 org.freedesktop.impl.portal.Settings=darkman
 ```
 
-#### greeter
+#### greeter & tuigreet
 
-i use greetd with tui-greet.
+i use greetd with tuigreet.
 
 contents of `/etc/greetd/config.toml`:
 
-```
+```ash
 [terminal]
 vt = 7
 
@@ -133,8 +133,22 @@ user = "greetd"
 
 contents of `/etc/conf.d/greetd`
 
-```
+```ash
 rc_need=seatd
+```
+
+greetd uses pam, and the config files for pam are (i simply added the `fprintd` line):
+
+`/etc/pam.d/greetd`
+
+```ash
+#%PAM-1.0
+
+auth     sufficient  pam_fprintd.so max-tries=2
+auth     include     base-auth
+account  include     base-account
+password include     base-password
+session  include     base-session
 ```
 
 #### fonts
