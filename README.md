@@ -157,10 +157,21 @@ i use `font-iosevka-base` for monospace, `font-inter` for sans-serif, `font-noto
 i use `iosevka-nerd-font` for nerd font symbols, and this one is (obviously) from NerdFonts. \
 i use `font-lora` from google fonts for serif font.
 
-#### librewolf
+since iosevka comes with bundled font families, i added this script under `/etc/fonts/conf.d/99-iosevka-term-expanded.conf`
 
-i had to manually change `font.name-list.monospace.x-{unicode, western}` to `Iosevka Term Extended` in about:config because, even though i specifically define it in [fontconfig](./.config/fontconfig/fonts.conf), librewolf defaults to Iosevka Regular
-
+```ash
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <match target="scan">
+    <test name="family"><string>Iosevka Term</string></test>
+    <test name="width" compare="eq"><const>expanded</const></test>
+    <edit name="family" mode="assign_replace">
+      <string>Iosevka Term Extended</string>
+    </edit>
+  </match>
+</fontconfig>
+```
 
 #### power control
 
