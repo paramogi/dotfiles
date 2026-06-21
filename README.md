@@ -115,3 +115,24 @@ to share the theme with the portals, where other apps also read from, add a `.co
 [preferred]
 org.freedesktop.impl.portal.Settings=darkman
 ```
+
+#### greeter
+
+i use greetd with tui-greet.
+
+contents of `/etc/greetd/config.toml`:
+
+```
+[terminal]
+vt = 7
+
+[default_session]
+command = "tuigreet --remember --time --cmd /usr/local/bin/dwl-run"
+user = "greetd"
+```
+
+contents of `/etc/conf.d/greetd`
+
+```
+rc_need=seatd
+```
