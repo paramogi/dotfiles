@@ -34,6 +34,8 @@ static const char *const autostart[] = {
 	"pipewire-pulse", NULL,
 	"dbus-update-activation-environment", "WAYLAND_DISPLAY", "XDG_CURRENT_DESKTOP", NULL,
 	"darkman", "run", NULL,
+	"swaybg", "-i", "/home/mogi/Pictures/Wallpapers/moonlit_night_in_holland.jpg", NULL,
+	"swayidle", "-w", "timeout", "300", "'wlopm --off \"*\"'", "resume", "'wlopm --on \"*\"'", NULL,
         NULL /* terminate */
 };
 

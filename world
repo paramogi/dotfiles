@@ -66,6 +66,7 @@ seatd
 secureboot-hook
 slurp
 swaybg
+swayidle
 systemd-efistub
 thinkfan
 udev-init-scripts
@@ -75,6 +76,7 @@ wayland-protocols
 wireless-regdb
 wireplumber
 wl-clipboard
+wlopm
 wlroots0.19-dev
 wmenu
 wpa_supplicant
