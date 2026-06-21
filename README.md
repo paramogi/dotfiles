@@ -136,3 +136,13 @@ contents of `/etc/conf.d/greetd`
 ```
 rc_need=seatd
 ```
+
+#### fonts
+
+i use `font-iosevka-base` for monospace, `font-inter` for sans-serif, `font-noto-cjk` and `font-noto-emoji` for extra symbols. these are from apk. \
+i use `iosevka-nerd-font` for nerd font symbols, and this one is (obviously) from NerdFonts. \
+i use `font-lora` from google fonts for serif font.
+
+#### librewolf
+
+i had to manually change `font.name-list.monospace.x-{unicode, western}` to `Iosevka Term Extended` because, even though i specifically define it in [fontconfig](./.config/fontconfig/fonts.conf), librewolf defaults to Iosevka Regular
