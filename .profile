@@ -1,3 +1,4 @@
+export ENV="$HOME/.ashrc"
 export UID=$(id -u)
 
 if test -z "${XDG_RUNTIME_DIR}"; then
