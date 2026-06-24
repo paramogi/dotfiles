@@ -11,7 +11,7 @@ static const unsigned int borderpx         = 0;  /* border pixel of windows */
 static const int showbar                   = 1; /* 0 means no bar */
 static const int topbar                    = 0; /* 0 means bottom bar */
 static const int follow                    = 1;  /* 1 means follow windows when sent to another tag */
-static const char *fonts[]                 = {"Iosevka Term Extended:size=12"};
+static const char *fonts[]                 = { "Iosevka Extended:size=11" };
 static const float rootcolor[]             = COLOR(0x000000ff);
 /* This conforms to the xdg-protocol. Set the alpha to zero to restore the old behavior */
 static const float fullscreen_bg[]         = {0.0f, 0.0f, 0.0f, 1.0f}; /* You can also use glsl colors */
@@ -36,7 +36,7 @@ static const char *const autostart[] = {
 	"dbus-update-activation-environment", "WAYLAND_DISPLAY", "XDG_CURRENT_DESKTOP", NULL,
 	"darkman", "run", NULL,
 	"swaybg", "-i", "/home/mogi/Pictures/Wallpapers/moonlit_night_in_holland.jpg", NULL,
-	"swayidle", "-w", "timeout", "300", "'wlopm --off \"*\"'", "resume", "'wlopm --on \"*\"'", NULL,
+	"sh", "-c", "swayidle -w timeout 120 'wlopm --off eDP-1' resume 'wlopm --on eDP-1'", NULL,
         NULL /* terminate */
 };
 
