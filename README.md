@@ -68,6 +68,11 @@ then recalculate checksums and build it:
 
 my dwl config is pretty basic, i didn't change anything major besides `config.def.h`, where i added printscrn support, volume change and mute support and brightness control. see `patches` to see which dwl-patches i've applied.
 
+after locking my screen, the bar was covered by the clients. \
+fix is in [this issue's](https://codeberg.org/dwl/dwl-patches/issues/602) replies. \
+i notice it still happens when it locks it with the bar hidden, it will then unlock with the bar unhidden but still covered by the clients.
+
+
 #### slstatus
 
 in slstatus, i added to `components/wifi.c` a piece of code to show a nerd font icon alongside wifi ESSID (make sure to add the function prototype to `slstatus.h` so the config files can find it):

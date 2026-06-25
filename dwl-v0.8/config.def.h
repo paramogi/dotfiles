@@ -28,6 +28,8 @@ static char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 /* logging */
 static int log_level = WLR_ERROR;
 
+static const char *lockcmd[] = { "/home/mogi/.local/bin/lock", NULL };
+
 /* Autostart */
 static const char *const autostart[] = {
 	"pipewire", NULL,
@@ -36,7 +38,7 @@ static const char *const autostart[] = {
 	"dbus-update-activation-environment", "WAYLAND_DISPLAY", "XDG_CURRENT_DESKTOP", NULL,
 	"darkman", "run", NULL,
 	"swaybg", "-i", "/home/mogi/Pictures/Wallpapers/moonlit_night_in_holland.jpg", NULL,
-	"sh", "-c", "swayidle -w timeout 120 'wlopm --off eDP-1' resume 'wlopm --on eDP-1'", NULL,
+	"sh", "-c", "swayidle -w timeout 120 '/home/mogi/.local/bin/lock; wlopm --off eDP-1' resume 'wlopm --on eDP-1'", NULL,
         NULL /* terminate */
 };
 
@@ -164,6 +166,7 @@ static const Key keys[] = {
 	{ MODKEY,                    XKB_KEY_t,           setlayout,        {.v = &layouts[0]} },
 	{ MODKEY,                    XKB_KEY_f,           setlayout,        {.v = &layouts[1]} },
 	{ MODKEY,                    XKB_KEY_m,           setlayout,        {.v = &layouts[2]} },
+	{ MODKEY,                    XKB_KEY_x,           spawn,            {.v = lockcmd} },
 	{ MODKEY,                    XKB_KEY_space,       setlayout,        {0} },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_space,       togglefloating,   {0} },
 	{ MODKEY,                    XKB_KEY_e,           togglefullscreen, {0} },
