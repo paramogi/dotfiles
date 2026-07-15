@@ -72,7 +72,7 @@ static const struct arg args[] = {
 	{ ram_perc, "   %s%% | ", NULL },
 	{ temp, "%s° ", "/sys/class/thermal/thermal_zone0/temp" },
 	{ cpu_perc, "  %s%% | ", NULL },
-	{ battery_icon, "%s%% | ", "BAT0" },
+	{ battery_icon, "%s%% | ", "BAT1" },
 	{ wifi_essid_icon, "%s | ", "wlan0" },
 	{ datetime, "%s ", "%b %d %H:%M" },
 };
