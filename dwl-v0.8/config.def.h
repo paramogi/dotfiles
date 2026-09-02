@@ -7,11 +7,11 @@
 /* appearance */
 static const int sloppyfocus               = 1;  /* focus follows mouse */
 static const int bypass_surface_visibility = 0;  /* 1 means idle inhibitors will disable idle tracking even if it's surface isn't visible  */
-static const unsigned int borderpx         = 0;  /* border pixel of windows */
+static const unsigned int borderpx         = 1;  /* border pixel of windows */
 static const int showbar                   = 1; /* 0 means no bar */
-static const int topbar                    = 0; /* 0 means bottom bar */
+static const int topbar                    = 1; /* 0 means bottom bar */
 static const int follow                    = 1;  /* 1 means follow windows when sent to another tag */
-static const char *fonts[]                 = { "Iosevka:size=8" };
+static const char *fonts[]                 = { "Iosevka Term:size=10" };
 static const float rootcolor[]             = COLOR(0x000000ff);
 /* This conforms to the xdg-protocol. Set the alpha to zero to restore the old behavior */
 static const float fullscreen_bg[]         = {0.0f, 0.0f, 0.0f, 1.0f}; /* You can also use glsl colors */
@@ -37,8 +37,8 @@ static const char *const autostart[] = {
 	"pipewire-pulse", NULL,
 	"dbus-update-activation-environment", "WAYLAND_DISPLAY", "XDG_CURRENT_DESKTOP", NULL,
 	"darkman", "run", NULL,
-	"swaybg", "-i", "/home/mogi/Pictures/Wallpapers/moonlit_night_in_holland.jpg", NULL,
-	"sh", "-c", "swayidle -w timeout 120 '/home/mogi/.local/bin/lock; wlopm --off eDP-1' resume 'wlopm --on eDP-1'", NULL,
+	//"swaybg", "-i", "/home/mogi/Pictures/Wallpapers/moonlit_night_in_holland.jpg", NULL,
+	//"sh", "-c", "swayidle -w timeout 120 '/home/mogi/.local/bin/lock; wlopm --off eDP-1' resume 'wlopm --on eDP-1'", NULL,
         NULL /* terminate */
 };
 
@@ -143,7 +143,7 @@ static const char *termcmd[] = { "foot", NULL };
 static const char *menucmd[] = {
 	"wmenu-run",
 	"-i",
-	"-f", "Iosevka Term Extended 10",
+	"-f", "Iosevka Term Extended 11",
 	"-l", "10",
 	NULL
 };
