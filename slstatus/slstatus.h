@@ -4,7 +4,6 @@
 const char *battery_perc(const char *);
 const char *battery_remaining(const char *);
 const char *battery_state(const char *);
-const char *battery_icon(const char *);
 
 /* cat */
 const char *cat(const char *path);
@@ -83,5 +82,4 @@ const char *vol_perc(const char *card);
 
 /* wifi */
 const char *wifi_essid(const char *interface);
-const char *wifi_essid_icon(const char *interface);
 const char *wifi_perc(const char *interface);

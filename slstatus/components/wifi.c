@@ -15,6 +15,7 @@
 			(rssi <= -100 ? 0 : \
 			(2 * (rssi + 100)))
 
+/*
 const char *
 wifi_essid_icon(const char *interface)
 {
@@ -36,6 +37,7 @@ wifi_essid_icon(const char *interface)
 
 	return bprintf("%s  %s", icons[idx], essid);
 }
+*/
 
 #if defined(__linux__)
 	#include <stdint.h>
