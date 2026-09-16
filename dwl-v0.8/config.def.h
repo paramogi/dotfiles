@@ -6,19 +6,19 @@
 
 /* appearance */
 static const int sloppyfocus               = 1;  /* focus follows mouse */
-static const int bypass_surface_visibility = 0;  /* 1 means idle inhibitors will disable idle tracking even if it's surface isn't visible  */
+static const int bypass_surface_visibility = 1;  /* 1 means idle inhibitors will disable idle tracking even if it's surface isn't visible  */
 static const unsigned int borderpx         = 1;  /* border pixel of windows */
 static const int showbar                   = 1; /* 0 means no bar */
 static const int topbar                    = 1; /* 0 means bottom bar */
 static const int follow                    = 1;  /* 1 means follow windows when sent to another tag */
-static const char *fonts[]                 = { "Iosevka Term:size=10" };
+static const char *fonts[]                 = { "Terminus:pixelsize=32" };
 static const float rootcolor[]             = COLOR(0x000000ff);
 /* This conforms to the xdg-protocol. Set the alpha to zero to restore the old behavior */
-static const float fullscreen_bg[]         = {0.0f, 0.0f, 0.0f, 1.0f}; /* You can also use glsl colors */
+static const float fullscreen_bg[]         = {0.0f, 0.0f, 0.0f, 1.0f}; /* You can also use glsl folors */
 static uint32_t colors[][3]                = {
 	/*               fg          bg          border    */
-	[SchemeNorm] = { 0xbbbbbbff, 0x222222ff, 0x444444ff },
-	[SchemeSel]  = { 0xeeeeeeff, 0x005577ff, 0x005577ff },
+	[SchemeNorm] = { 0xeaeae9ff, 0x383932ff, 0x444444ff },
+	[SchemeSel]  = { 0x383932ff, 0x93a1a1ff, 0x93a1a1ff },
 	[SchemeUrg]  = { 0,          0,          0x770000ff },
 };
 
@@ -37,15 +37,14 @@ static const char *const autostart[] = {
 	"pipewire-pulse", NULL,
 	"dbus-update-activation-environment", "WAYLAND_DISPLAY", "XDG_CURRENT_DESKTOP", NULL,
 	"darkman", "run", NULL,
-	//"swaybg", "-i", "/home/mogi/Pictures/Wallpapers/moonlit_night_in_holland.jpg", NULL,
-	//"sh", "-c", "swayidle -w timeout 120 '/home/mogi/.local/bin/lock; wlopm --off eDP-1' resume 'wlopm --on eDP-1'", NULL,
+	"swaybg", "-i", "/home/mogi/Pictures/Wallpapers/moonlit_night_in_holland.jpg", NULL,
+	"sh", "-c", "swayidle -w timeout 120 '/home/mogi/.local/bin/lock; wlopm --off eDP-1' resume 'wlopm --on eDP-1'", NULL,
         NULL /* terminate */
 };
 
 static const Rule rules[] = {
 	/* app_id             title       tags mask     isfloating   monitor */
-	{ "Gimp_EXAMPLE",     NULL,       0,            1,           -1 }, /* Start on currently visible tags floating, not tiled */
-	{ "firefox_EXAMPLE",  NULL,       1 << 8,       0,           -1 }, /* Start on ONLY tag "9" */
+	{ "zen-browser",      NULL,       1 << 1,       0,           -1 }, /* Start on ONLY tag "2" */
     /* default/example rule: can be changed but cannot be eliminated; at least one rule must exist */
 };
 
@@ -142,8 +141,9 @@ static const int hide_cursor_when_typing = 1;
 static const char *termcmd[] = { "foot", NULL };
 static const char *menucmd[] = {
 	"wmenu-run",
+	"-p", "run ",
 	"-i",
-	"-f", "Iosevka Term Extended 11",
+	"-f", "Terminus 16px",
 	"-l", "10",
 	NULL
 };
