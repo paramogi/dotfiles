@@ -11,7 +11,7 @@ static const unsigned int borderpx         = 1;  /* border pixel of windows */
 static const int showbar                   = 1; /* 0 means no bar */
 static const int topbar                    = 1; /* 0 means bottom bar */
 static const int follow                    = 1;  /* 1 means follow windows when sent to another tag */
-static const char *fonts[]                 = { "Terminus:pixelsize=32" };
+static const char *fonts[]                 = { "Terminus (TTF):size=12" };
 static const float rootcolor[]             = COLOR(0x000000ff);
 /* This conforms to the xdg-protocol. Set the alpha to zero to restore the old behavior */
 static const float fullscreen_bg[]         = {0.0f, 0.0f, 0.0f, 1.0f}; /* You can also use glsl folors */
@@ -39,6 +39,7 @@ static const char *const autostart[] = {
 	"darkman", "run", NULL,
 	"swaybg", "-i", "/home/mogi/Pictures/Wallpapers/moonlit_night_in_holland.jpg", NULL,
 	"sh", "-c", "swayidle -w timeout 120 '/home/mogi/.local/bin/lock; wlopm --off eDP-1' resume 'wlopm --on eDP-1'", NULL,
+	"mako", NULL,
         NULL /* terminate */
 };
 
@@ -61,10 +62,16 @@ static const Layout layouts[] = {
  * WARNING: negative values other than (-1, -1) cause problems with Xwayland clients due to
  * https://gitlab.freedesktop.org/xorg/xserver/-/issues/899 */
 static const MonitorRule monrules[] = {
-   /* name        mfact  nmaster scale layout       rotate/reflect                x    y
-    * example of a HiDPI laptop monitor:
-    { "eDP-1",    0.5f,  1,      2,    &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL,   -1,  -1 }, */
-	{ "eDP-1",       0.5f, 1,      2,    &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL,   -1,  -1 },
+	/*  name     mfact  nmaster  scale      layout              rotate/reflect   x   y  resx resy      rate mode adaptive */
+	/* example of a HiDPI laptop monitor at 120Hz: */
+	/* {"eDP-1",  0.5f,      1,     2, &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL,  0,  0,    0,   0, 120.000f,   1,       1}, */
+	/*
+	* mode lets the user decide how dwl should implement the modes:
+	* -1 sets a custom mode following the user's choice
+	* All other numbers set the mode at the index n; 0 is the standard mode; see wlr-randr
+	*/
+	{ "eDP-1",    0.5f,  1, 2, &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL, -1, -1, 0, 0, 120.00f, 0, 1 },
+	{ NULL,       0.55f, 1, 1, &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL, -1, -1, 0, 0,   60.0f, 0, 0 },
 	/* default monitor rule: can be changed but cannot be eliminated; at least one monitor rule must exist */
 };
 
@@ -143,7 +150,7 @@ static const char *menucmd[] = {
 	"wmenu-run",
 	"-p", "run ",
 	"-i",
-	"-f", "Terminus 16px",
+	"-f", "Terminus (TTF) 12",
 	"-l", "10",
 	NULL
 };
@@ -191,8 +198,8 @@ static const Key keys[] = {
 	{ 0, XKB_KEY_XF86AudioLowerVolume,  spawn, SHCMD("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-") },
 	{ 0, XKB_KEY_XF86AudioMute,         spawn, SHCMD("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle") },
 	{ 0, XKB_KEY_XF86AudioMicMute,      spawn, SHCMD("wpctl set-mute @DEFAULT_SOURCE@ toggle") },
-	{ 0, XKB_KEY_XF86MonBrightnessUp,   spawn, SHCMD("brightnessctl set 5%+") },
-	{ 0, XKB_KEY_XF86MonBrightnessDown, spawn, SHCMD("brightnessctl set 5%-") },
+	{ 0, XKB_KEY_XF86MonBrightnessUp,   spawn, SHCMD("brightnessctl -q set 5%+") },
+	{ 0, XKB_KEY_XF86MonBrightnessDown, spawn, SHCMD("brightnessctl -q set 5%-") },
 	{ 0, XKB_KEY_Print,                 spawn, SHCMD("grim -g \"$(slurp)\" - | wl-copy --type image/png") },
 	{ WLR_MODIFIER_SHIFT,XKB_KEY_Print, spawn, SHCMD("grim -g \"$(slurp)\" - | tee ~/Pictures/Screenshots/$(date +'%d%m%Y-%H%M%S').png | wl-copy --type image/png") },
 
