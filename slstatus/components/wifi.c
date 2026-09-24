@@ -1,7 +1,6 @@
 /* See LICENSE file for copyright and license details. */
 #include <ifaddrs.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -15,30 +14,6 @@
 			(rssi <= -100 ? 0 : \
 			(2 * (rssi + 100)))
 
-/*
-const char *
-wifi_essid_icon(const char *interface)
-{
-	const char *perc, *essid;
-	unsigned long ul_perc, idx;
-	static const char *icons[5] = {
-		"󰤮", "󰤟", "󰤢", "󰤥", "󰤨",
-	};
-
-	if (!(perc = wifi_perc(interface)) || !(essid = wifi_essid(interface)))
-		return bprintf("%s ", icons[0]);
-
-	ul_perc = strtoul(perc, NULL, 10);
-
-	// map 0 - 100 to 0 - 4; factor = 25
-	idx = 1 + ul_perc / 25;
-	if (idx > 4)
-		idx = 4;
-
-	return bprintf("%s  %s", icons[idx], essid);
-}
-*/
-
 #if defined(__linux__)
 	#include <stdint.h>
 	#include <net/if.h>
@@ -48,7 +23,7 @@ wifi_essid_icon(const char *interface)
 
 	static int nlsock = -1;
 	static uint32_t seq = 1;
-	static char resp[4096];
+	static char resp[4096 + 1];
 
 	static char *
 	findattr(int attr, const char *p, const char *e, size_t *len)
@@ -134,7 +109,11 @@ wifi_essid_icon(const char *interface)
 			return -1;
 		}
 		if (strcmp(ifr.ifr_name, interface) != 0) {
-			strcpy(ifr.ifr_name, interface);
+			if (snprintf(ifr.ifr_name, sizeof(ifr.ifr_name),
+			             "%s", interface) >= (int)sizeof(ifr.ifr_name)) {
+				warn("interface name too long: '%s'", interface);
+				return -1;
+			}
 		}
 		if (ioctl(ifsock, SIOCGIFINDEX, &ifr) != 0) {
 			warn("ioctl 'SIOCGIFINDEX':");
@@ -184,7 +163,7 @@ wifi_essid_icon(const char *interface)
 			warn("send 'AF_NETLINK':");
 			return NULL;
 		}
-		r = recv(nlsock, resp, sizeof(resp), 0);
+		r = recv(nlsock, resp, sizeof(resp) - 1, 0);
 		if (r < 0) {
 			warn("recv 'AF_NETLINK':");
 			return NULL;
@@ -435,5 +414,4 @@ wifi_essid_icon(const char *interface)
 		close(sockfd);
 		return fmt;
 	}
-
 #endif

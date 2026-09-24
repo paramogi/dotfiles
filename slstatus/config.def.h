@@ -1,7 +1,7 @@
 /* See LICENSE file for copyright and license details. */
 
 /* interval between updates (in ms) */
-const unsigned int interval = 1000;
+const unsigned int interval = 500;
 
 /* text to show if no value can be retrieved */
 static const char unknown_str[] = "n/a";
@@ -9,13 +9,21 @@ static const char unknown_str[] = "n/a";
 /* maximum output string length */
 #define MAXLEN 2048
 
+/* battery levels to notify - add any levels you want to receive notification for (in percent) */
+const int notifiable_levels[] = {
+    20,
+    10,
+    5,
+};
+const size_t notifiable_levels_count = sizeof(notifiable_levels) / sizeof(notifiable_levels[0]);
+
 /*
  * function            description                     argument (example)
  *
- * battery_icon        battery_perc with an icon       battery name (BAT0)
- *                                                     NULL on OpenBSD/FreeBSD
  * battery_perc        battery percentage              battery name (BAT0)
  *                                                     NULL on OpenBSD/FreeBSD
+ * battery_notify      linux battery notifications     battery name (BAT0)
+ *                                                     OpenBSD/FreeBSD not supported
  * battery_remaining   battery remaining HH:MM         battery name (BAT0)
  *                                                     NULL on OpenBSD/FreeBSD
  * battery_state       battery charging state          battery name (BAT0)
@@ -64,16 +72,19 @@ static const char unknown_str[] = "n/a";
  * vol_perc            OSS/ALSA volume in percent      mixer file (/dev/mixer)
  *                                                     NULL on OpenBSD/FreeBSD
  * wifi_essid          WiFi ESSID                      interface name (wlan0)
- * wifi_essid_icon     WiFi icon and ESSID             interface name (wlan0)
  * wifi_perc           WiFi signal in percent          interface name (wlan0)
  */
 static const struct arg args[] = {
 	/* function format          argument */
-	{ ram_perc, " ram %s%% | ", NULL },
+	{ ram_perc, "ram %s%% | ", NULL },
 	{ cpu_perc, "cpu %s%% ", NULL },
 	{ temp, "%s°C | ", "/sys/class/thermal/thermal_zone0/temp" },
-	{ battery_perc, "bat %s%% | ", "BAT0" },
+	{ battery_perc, "%s%% ", "BAT0" },
+	{ battery_state, "%s | ", "BAT0" },
+	{ run_command, "vol %s ", "wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{ if ($3) print \"muted\"; else printf \"%d%%\", $2*100 }'" },
+	{ run_command, "mic %s | ", "wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | awk '{ printf ($3 ? \"muted\" : \"on\") }'" },
 	{ wifi_essid, "%s ", "wlan0" },
 	{ wifi_perc, "%s%% | ", "wlan0" },
-	{ datetime, "%s ", "%b %d %H:%M" },
+	{ datetime, "%s", "%b %d %H:%M" },
+	{ battery_notify, "", "BAT0" },
 };

@@ -11,28 +11,12 @@
 	const char *
 	temp(const char *file)
 	{
-		/*
-		uintmax_t temp, idx;
-		static const char *icons[5] = {
-			"", "", "", "", "",
-		};
-
-		if (pscanf(file, "%ju", &temp) != 1)
-			return NULL;
-
-		temp /= 1000;
-		idx = 1 + temp / 25;
-		if (idx > 4)
-			idx = 4;
-
-		return bprintf("%s %ju", icons[idx], temp);
-		*/
 		uintmax_t temp;
 
 		if (pscanf(file, "%ju", &temp) != 1)
 			return NULL;
-		temp /= 1000;
-		return bprintf("%ju", temp);
+
+		return bprintf("%ju", temp / 1000);
 	}
 #elif defined(__OpenBSD__)
 	#include <stdio.h>
