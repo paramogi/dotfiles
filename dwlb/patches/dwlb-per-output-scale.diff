@@ -1,0 +1,543 @@
+diff --git a/dwlb.1 b/dwlb.1
+index 0ef5c30..3e1851a 100644
+--- a/dwlb.1
++++ b/dwlb.1
+@@ -122,23 +122,19 @@ Status commands can be disabled with
+ .SS Scaling
+ .
+ .PP
+-If you use scaling in Wayland,
+-you can specify
++Each bar follows the integer scale its output reports,
++so outputs with different scales all get sharp bars.
++Fractional scales such as 1.5 are reported rounded up,
++and the compositor downscales the buffer.
+ .B buffer_scale
+-through config file or by passing it as an option
+-(only integer values):
++in the config file is the fallback for outputs that report no scale.
++To force one scale on every output instead:
+ .
+ .IP
+ .EX
+ dwlb \-scale 2
+ .EE
+ .
+-.PP
+-This will render both surface and a cursor with 2\(mu detail.
+-If your monitor is set to 1.25 or 1.5 scaling,
+-setting scale to 2 will also work as compositor
+-will downscale the buffer properly.
+-.
+ .SS Someblocks
+ .
+ .PP
+@@ -259,7 +255,7 @@ Specify background color of urgent tags
+ .TP
+ .BR \-scale \~\c
+ .I BUFFER_SCALE
+-Specify buffer scale value for integer scaling
++Force this buffer scale on all outputs instead of following each output's scale
+ .
+ .SS Commands
+ .
+diff --git a/dwlb.c b/dwlb.c
+index faab2d9..9ca9d93 100644
+--- a/dwlb.c
++++ b/dwlb.c
+@@ -99,7 +99,7 @@
+ 	"	-urgent-bg-color [COLOR]	specify background color of urgent tags\n" \
+ 	"	-middle-bg-color [COLOR]	specify background color of the color in the middle of the bar\n" \
+ 	"	-middle-bg-color-selected [COLOR]	specify background color of the color in the middle of the bar, when selected\n" \
+-	"	-scale [BUFFER_SCALE]		specify buffer scale value for integer scaling\n" \
++	"	-scale [BUFFER_SCALE]		force one buffer scale on all outputs (default: per output)\n" \
+ 	"Commands\n"							\
+ 	"	-target-socket [SOCKET-NAME]	set the socket to send command to. Sockets can be found in `$XDG_RUNTIME_DIR/dwlb/`\n"\
+ 	"	-status	[OUTPUT] [TEXT]		set status text\n"	\
+@@ -153,6 +153,8 @@ typedef struct {
+ 	bool configured;
+ 	uint32_t width, height;
+ 	uint32_t textpadding;
++	uint32_t scale, pending_scale;
++	struct fcft_font *font;
+ 	uint32_t stride, bufsize;
+ 	
+ 	uint32_t mtags, ctags, urg, sel;
+@@ -193,8 +195,9 @@ static struct zwlr_layer_shell_v1 *layer_shell;
+ static struct zxdg_output_manager_v1 *output_manager;
+ 
+ static struct zdwl_ipc_manager_v2 *dwl_wm;
+-static struct wl_cursor_image *cursor_image;
+-static struct wl_surface *cursor_surface;
++#define MAX_SCALE 8
++static struct wl_cursor_image *cursor_images[MAX_SCALE + 1];
++static struct wl_surface *cursor_surfaces[MAX_SCALE + 1];
+ 
+ static struct wl_list bar_list, seat_list;
+ 
+@@ -203,8 +206,9 @@ static uint32_t tags_l, tags_c;
+ static char **layouts;
+ static uint32_t layouts_l, layouts_c;
+ 
+-static struct fcft_font *font;
+-static uint32_t height, textpadding, buffer_scale;
++static struct fcft_font *fonts[MAX_SCALE + 1];
++static uint32_t buffer_scale;
++static bool scale_forced;
+ 
+ static bool run_display;
+ 
+@@ -240,7 +244,8 @@ allocate_shm_file(size_t size)
+ }
+ 
+ static uint32_t
+-draw_text(char *text,
++draw_text(struct fcft_font *font,
++	  char *text,
+ 	  uint32_t x,
+ 	  uint32_t y,
+ 	  pixman_image_t *foreground,
+@@ -363,8 +368,8 @@ draw_text(char *text,
+ 	return nx;
+ }
+ 
+-#define TEXT_WIDTH(text, maxwidth, padding)				\
+-	draw_text(text, 0, 0, NULL, NULL, NULL, NULL, NULL, maxwidth, 0, padding, NULL, 0)
++#define TEXT_WIDTH(font, text, maxwidth, padding)			\
++	draw_text(font, text, 0, 0, NULL, NULL, NULL, NULL, NULL, maxwidth, 0, padding, NULL, 0)
+ 
+ static int
+ draw_frame(Bar *bar)
+@@ -396,6 +401,7 @@ draw_frame(Bar *bar)
+ 	
+ 	/* Draw on images */
+ 	uint32_t x = 0;
++	struct fcft_font *font = bar->font;
+ 	uint32_t y = (bar->height + font->ascent - font->descent) / 2;
+ 	uint32_t boxs = font->height / 9;
+ 	uint32_t boxw = font->height / 6 + 2;
+@@ -440,23 +446,23 @@ draw_frame(Bar *bar)
+ 			}
+ 		}
+ 		
+-		x = draw_text(tags[i], x, y, foreground, foreground_mask, background, fg_color, bg_color,
++		x = draw_text(font, tags[i], x, y, foreground, foreground_mask, background, fg_color, bg_color,
+ 			      bar->width, bar->height, bar->textpadding, NULL, 0);
+ 	}
+ 	
+-	x = draw_text(bar->layout, x, y, foreground, foreground_mask, background,
++	x = draw_text(font, bar->layout, x, y, foreground, foreground_mask, background,
+ 		      &inactive_fg_color, &inactive_bg_color, bar->width,
+ 		      bar->height, bar->textpadding, NULL, 0);
+ 	
+-	uint32_t status_width = TEXT_WIDTH(bar->status.text, bar->width - x, bar->textpadding);
+-	draw_text(bar->status.text, bar->width - status_width, y, foreground, foreground_mask,
++	uint32_t status_width = TEXT_WIDTH(font, bar->status.text, bar->width - x, bar->textpadding);
++	draw_text(font, bar->status.text, bar->width - status_width, y, foreground, foreground_mask,
+ 		  background, &inactive_fg_color, &inactive_bg_color,
+ 		  bar->width, bar->height, bar->textpadding,
+ 		  bar->status.colors, bar->status.colors_l);
+ 
+ 	uint32_t nx;
+ 	if (center_title) {
+-		uint32_t title_width = TEXT_WIDTH(custom_title ? bar->title.text : bar->window_title, bar->width - status_width - x, 0);
++		uint32_t title_width = TEXT_WIDTH(font, custom_title ? bar->title.text : bar->window_title, bar->width - status_width - x, 0);
+ 		nx = MAX(x, MIN((bar->width - title_width) / 2, bar->width - status_width - title_width));
+ 	} else {
+ 		nx = MIN(x + bar->textpadding, bar->width - status_width);
+@@ -469,7 +475,7 @@ draw_frame(Bar *bar)
+ 				});
+ 	x = nx;
+ 	
+-	x = draw_text(custom_title ? bar->title.text : bar->window_title,
++	x = draw_text(font, custom_title ? bar->title.text : bar->window_title,
+ 		      x, y, foreground, foreground_mask, background,
+ 		      (bar->sel && active_color_title) ? &active_fg_color : &inactive_fg_color,
+ 		      (bar->sel && active_color_title) ? &active_bg_color : &inactive_bg_color,
+@@ -496,7 +502,7 @@ draw_frame(Bar *bar)
+ 	
+ 	munmap(data, bar->bufsize);
+ 
+-	wl_surface_set_buffer_scale(bar->wl_surface, buffer_scale);
++	wl_surface_set_buffer_scale(bar->wl_surface, bar->scale);
+ 	wl_surface_attach(bar->wl_surface, buffer, 0, 0);
+ 	wl_surface_damage_buffer(bar->wl_surface, 0, 0, bar->width, bar->height);
+ 	wl_surface_commit(bar->wl_surface);
+@@ -509,13 +515,13 @@ static void
+ layer_surface_configure(void *data, struct zwlr_layer_surface_v1 *surface,
+ 			uint32_t serial, uint32_t w, uint32_t h)
+ {
+-	w = w * buffer_scale;
+-	h = h * buffer_scale;
++	Bar *bar = (Bar *)data;
++
++	w = w * bar->scale;
++	h = h * bar->scale;
+ 
+ 	zwlr_layer_surface_v1_ack_configure(surface, serial);
+ 	
+-	Bar *bar = (Bar *)data;
+-	
+ 	if (bar->configured && w == bar->width && h == bar->height)
+ 		return;
+ 	
+@@ -604,6 +610,8 @@ pointer_enter(void *data, struct wl_pointer *pointer,
+ {
+ 	Seat *seat = (Seat *)data;
+ 
++	seat->pointer_x = wl_fixed_to_int(surface_x);
++	seat->pointer_y = wl_fixed_to_int(surface_y);
+ 	seat->bar = NULL;
+ 	Bar *bar;
+ 	wl_list_for_each(bar, &bar_list, link) {
+@@ -613,21 +621,24 @@ pointer_enter(void *data, struct wl_pointer *pointer,
+ 		}
+ 	}
+ 
+-	if (!cursor_image) {
++	if (!seat->bar)
++		return;
++	uint32_t s = seat->bar->scale;
++	if (!cursor_images[s]) {
+ 		const char *size_str = getenv("XCURSOR_SIZE");
+ 		int size = size_str ? atoi(size_str) : 0;
+ 		if (size == 0)
+ 			size = 24;
+-		struct wl_cursor_theme *cursor_theme = wl_cursor_theme_load(getenv("XCURSOR_THEME"), size * buffer_scale, shm);
+-		cursor_image = wl_cursor_theme_get_cursor(cursor_theme, "left_ptr")->images[0];
+-		cursor_surface = wl_compositor_create_surface(compositor);
+-		wl_surface_set_buffer_scale(cursor_surface, buffer_scale);
+-		wl_surface_attach(cursor_surface, wl_cursor_image_get_buffer(cursor_image), 0, 0);
+-		wl_surface_commit(cursor_surface);
++		struct wl_cursor_theme *cursor_theme = wl_cursor_theme_load(getenv("XCURSOR_THEME"), size * s, shm);
++		cursor_images[s] = wl_cursor_theme_get_cursor(cursor_theme, "left_ptr")->images[0];
++		cursor_surfaces[s] = wl_compositor_create_surface(compositor);
++		wl_surface_set_buffer_scale(cursor_surfaces[s], s);
++		wl_surface_attach(cursor_surfaces[s], wl_cursor_image_get_buffer(cursor_images[s]), 0, 0);
++		wl_surface_commit(cursor_surfaces[s]);
+ 	}
+-	wl_pointer_set_cursor(pointer, serial, cursor_surface,
+-			      cursor_image->hotspot_x,
+-			      cursor_image->hotspot_y);
++	wl_pointer_set_cursor(pointer, serial, cursor_surfaces[s],
++			      cursor_images[s]->hotspot_x / s,
++			      cursor_images[s]->hotspot_y / s);
+ }
+ 
+ static void
+@@ -666,6 +677,8 @@ pointer_frame(void *data, struct wl_pointer *pointer)
+ 	if (!seat->pointer_button || !seat->bar)
+ 		return;
+ 
++	/* hit-test in buffer pixels, the same space draw_frame lays out in */
++	uint32_t px = seat->pointer_x * seat->bar->scale;
+ 	uint32_t x = 0, i = 0;
+ 	do {
+ 		if (hide_vacant) {
+@@ -675,8 +688,8 @@ pointer_frame(void *data, struct wl_pointer *pointer)
+ 			if (!active && !occupied && !urgent)
+ 				continue;
+ 		}
+-		x += TEXT_WIDTH(tags[i], seat->bar->width - x, seat->bar->textpadding) / buffer_scale;
+-	} while (seat->pointer_x >= x && ++i < tags_l);
++		x += TEXT_WIDTH(seat->bar->font, tags[i], seat->bar->width - x, seat->bar->textpadding);
++	} while (px >= x && ++i < tags_l);
+ 
+ 	if (i < tags_l) {
+ 		/* Clicked on tags */
+@@ -688,7 +701,7 @@ pointer_frame(void *data, struct wl_pointer *pointer)
+ 			else if (seat->pointer_button == BTN_RIGHT)
+ 				zdwl_ipc_output_v2_set_tags(seat->bar->dwl_wm_output, seat->bar->mtags ^ (1 << i), 0);
+ 		}
+-	} else if (seat->pointer_x < (x += TEXT_WIDTH(seat->bar->layout, seat->bar->width - x, seat->bar->textpadding))) {
++	} else if (px < (x += TEXT_WIDTH(seat->bar->font, seat->bar->layout, seat->bar->width - x, seat->bar->textpadding))) {
+ 		/* Clicked on layout */
+ 		if (ipc) {
+ 			if (seat->pointer_button == BTN_LEFT)
+@@ -697,20 +710,20 @@ pointer_frame(void *data, struct wl_pointer *pointer)
+ 				zdwl_ipc_output_v2_set_layout(seat->bar->dwl_wm_output, 2);
+ 		}
+ 	} else {
+-		uint32_t status_x = seat->bar->width / buffer_scale - TEXT_WIDTH(seat->bar->status.text, seat->bar->width - x, seat->bar->textpadding) / buffer_scale;
+-		if (seat->pointer_x < status_x) {
++		uint32_t status_x = seat->bar->width - TEXT_WIDTH(seat->bar->font, seat->bar->status.text, seat->bar->width - x, seat->bar->textpadding);
++		if (px < status_x) {
+ 			/* Clicked on title */
+ 			if (custom_title) {
+ 				if (center_title) {
+-					uint32_t title_width = TEXT_WIDTH(seat->bar->title.text, status_x - x, 0);
++					uint32_t title_width = TEXT_WIDTH(seat->bar->font, seat->bar->title.text, status_x - x, 0);
+ 					x = MAX(x, MIN((seat->bar->width - title_width) / 2, status_x - title_width));
+ 				} else {
+ 					x = MIN(x + seat->bar->textpadding, status_x);
+ 				}
+ 				for (i = 0; i < seat->bar->title.buttons_l; i++) {
+ 					if (seat->pointer_button == seat->bar->title.buttons[i].btn
+-					    && seat->pointer_x >= x + seat->bar->title.buttons[i].x1
+-					    && seat->pointer_x < x + seat->bar->title.buttons[i].x2) {
++					    && px >= x + seat->bar->title.buttons[i].x1
++					    && px < x + seat->bar->title.buttons[i].x2) {
+ 						shell_command(seat->bar->title.buttons[i].command);
+ 						break;
+ 					}
+@@ -721,8 +734,8 @@ pointer_frame(void *data, struct wl_pointer *pointer)
+ 			for (i = 0; i < seat->bar->status.buttons_l; i++) {
+ 			
+ 				if (seat->pointer_button == seat->bar->status.buttons[i].btn
+-				    && seat->pointer_x >= status_x + seat->bar->textpadding + seat->bar->status.buttons[i].x1 / buffer_scale
+-				    && seat->pointer_x < status_x + seat->bar->textpadding + seat->bar->status.buttons[i].x2 / buffer_scale) {
++				    && px >= status_x + seat->bar->textpadding + seat->bar->status.buttons[i].x1
++				    && px < status_x + seat->bar->textpadding + seat->bar->status.buttons[i].x2) {
+ 					shell_command(seat->bar->status.buttons[i].command);
+ 					break;
+ 				}
+@@ -750,13 +763,14 @@ pointer_axis_discrete(void *data, struct wl_pointer *pointer,
+ 	if (!seat->bar)
+ 		return;
+ 
+-	uint32_t status_x = seat->bar->width / buffer_scale - TEXT_WIDTH(seat->bar->status.text, seat->bar->width, seat->bar->textpadding) / buffer_scale;
+-	if (seat->pointer_x > status_x) {
++	uint32_t px = seat->pointer_x * seat->bar->scale;
++	uint32_t status_x = seat->bar->width - TEXT_WIDTH(seat->bar->font, seat->bar->status.text, seat->bar->width, seat->bar->textpadding);
++	if (px > status_x) {
+ 		/* Clicked on status */
+ 		for (i = 0; i < seat->bar->status.buttons_l; i++) {
+ 			if (btn == seat->bar->status.buttons[i].btn
+-			    && seat->pointer_x >= status_x + seat->bar->textpadding + seat->bar->status.buttons[i].x1 / buffer_scale
+-			    && seat->pointer_x < status_x + seat->bar->textpadding + seat->bar->status.buttons[i].x2 / buffer_scale) {
++			    && px >= status_x + seat->bar->textpadding + seat->bar->status.buttons[i].x1
++			    && px < status_x + seat->bar->textpadding + seat->bar->status.buttons[i].x2) {
+ 				shell_command(seat->bar->status.buttons[i].command);
+ 				break;
+ 			}
+@@ -834,12 +848,12 @@ show_bar(Bar *bar)
+ 		DIE("Could not create layer_surface");
+ 	zwlr_layer_surface_v1_add_listener(bar->layer_surface, &layer_surface_listener, bar);
+ 
+-	zwlr_layer_surface_v1_set_size(bar->layer_surface, 0, bar->height / buffer_scale);
++	zwlr_layer_surface_v1_set_size(bar->layer_surface, 0, bar->height / bar->scale);
+ 	zwlr_layer_surface_v1_set_anchor(bar->layer_surface,
+ 					 (bar->bottom ? ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM : ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP)
+ 					 | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+ 					 | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
+-	zwlr_layer_surface_v1_set_exclusive_zone(bar->layer_surface, bar->height / buffer_scale);
++	zwlr_layer_surface_v1_set_exclusive_zone(bar->layer_surface, bar->height / bar->scale);
+ 	wl_surface_commit(bar->wl_surface);
+ 
+ 	bar->hidden = false;
+@@ -1000,11 +1014,82 @@ static const struct zdwl_ipc_output_v2_listener dwl_wm_output_listener = {
+ 	.floating = dwl_wm_output_floating
+ };
+ 
++static struct fcft_font *
++font_for_scale(uint32_t s)
++{
++	if (!fonts[s]) {
++		char buf[16];
++		snprintf(buf, sizeof buf, "dpi=%u", 96 * s);
++		if (!(fonts[s] = fcft_from_name(1, (const char *[]) {fontstr}, buf)))
++			DIE("Could not load font");
++	}
++	return fonts[s];
++}
++
++static void
++bar_set_scale(Bar *bar, uint32_t s)
++{
++	if (s < 1)
++		s = 1;
++	if (s > MAX_SCALE)
++		s = MAX_SCALE;
++	bar->scale = s;
++	bar->font = font_for_scale(s);
++	bar->textpadding = bar->font->height / 2;
++	bar->height = (bar->font->height / s + vertical_padding * 2) * s;
++}
++
++static void
++wl_output_geometry(void *data, struct wl_output *wl_output, int32_t x, int32_t y,
++		   int32_t pw, int32_t ph, int32_t subpixel, const char *make,
++		   const char *model, int32_t transform)
++{
++}
++
++static void
++wl_output_mode(void *data, struct wl_output *wl_output, uint32_t flags,
++	       int32_t width, int32_t height, int32_t refresh)
++{
++}
++
++static void
++wl_output_scale(void *data, struct wl_output *wl_output, int32_t factor)
++{
++	Bar *bar = (Bar *)data;
++
++	bar->pending_scale = factor < 1 ? 1 : factor > MAX_SCALE ? MAX_SCALE : factor;
++}
++
++static void
++wl_output_done(void *data, struct wl_output *wl_output)
++{
++	Bar *bar = (Bar *)data;
++
++	if (scale_forced || !bar->pending_scale || bar->pending_scale == bar->scale)
++		return;
++	if (!bar->font) {
++		/* not set up yet, setup_bar picks it up */
++		bar->scale = bar->pending_scale;
++		return;
++	}
++	bar_set_scale(bar, bar->pending_scale);
++	if (!bar->hidden) {
++		hide_bar(bar);
++		show_bar(bar);
++	}
++}
++
++static const struct wl_output_listener wl_output_listener = {
++	.geometry = wl_output_geometry,
++	.mode = wl_output_mode,
++	.done = wl_output_done,
++	.scale = wl_output_scale,
++};
++
+ static void
+ setup_bar(Bar *bar)
+ {
+-	bar->height = height * buffer_scale;
+-	bar->textpadding = textpadding;
++	bar_set_scale(bar, bar->scale && !scale_forced ? bar->scale : buffer_scale);
+ 	bar->bottom = bottom;
+ 	bar->hidden = hidden;
+ 
+@@ -1046,7 +1131,8 @@ handle_global(void *data, struct wl_registry *registry,
+ 		if (!bar)
+ 			EDIE("calloc");
+ 		bar->registry_name = name;
+-		bar->wl_output = wl_registry_bind(registry, name, &wl_output_interface, 1);
++		bar->wl_output = wl_registry_bind(registry, name, &wl_output_interface, version < 2 ? version : 2);
++		wl_output_add_listener(bar->wl_output, &wl_output_listener, bar);
+ 		if (run_display)
+ 			setup_bar(bar);
+ 		wl_list_insert(&bar_list, &bar->link);
+@@ -1285,7 +1371,7 @@ parse_color(const char *str, pixman_color_t *clr)
+ }
+ 
+ static void
+-parse_into_customtext(CustomText *ct, char *text)
++parse_into_customtext(CustomText *ct, char *text, struct fcft_font *font)
+ {
+ 	ct->colors_l = ct->buttons_l = 0;
+ 
+@@ -1425,25 +1511,6 @@ parse_into_customtext(CustomText *ct, char *text)
+ 	}
+ }
+ 
+-static void
+-copy_customtext(CustomText *from, CustomText *to)
+-{
+-	snprintf(to->text, sizeof to->text, "%s", from->text);
+-	to->colors_l = to->buttons_l = 0;
+-	for (uint32_t i = 0; i < from->colors_l; i++) {
+-		Color *color;
+-		ARRAY_APPEND(to->colors, to->colors_l, to->colors_c, color);
+-		color->color = from->colors[i].color;
+-		color->bg = from->colors[i].bg;
+-		color->start = from->colors[i].start - (char *)&from->text + (char *)&to->text;
+-	}
+-	for (uint32_t i = 0; i < from->buttons_l; i++) {
+-		Button *button;
+-		ARRAY_APPEND(to->buttons, to->buttons_l, to->buttons_c, button);
+-		*button = from->buttons[i];
+-	}
+-}
+-
+ static void
+ read_socket(void)
+ {
+@@ -1493,36 +1560,26 @@ read_socket(void)
+ 		if (!*wordend)
+ 			return;
+ 		if (all) {
+-			Bar *first = NULL;
++			/* parse per bar: button offsets depend on each bar's font */
+ 			wl_list_for_each(bar, &bar_list, link) {
+-				if (first) {
+-					copy_customtext(&first->status, &bar->status);
+-				} else {
+-					parse_into_customtext(&bar->status, wordend);
+-					first = bar;
+-				}
++				parse_into_customtext(&bar->status, wordend, bar->font);
+ 				bar->redraw = true;
+ 			}
+ 		} else {
+-			parse_into_customtext(&bar->status, wordend);
++			parse_into_customtext(&bar->status, wordend, bar->font);
+ 			bar->redraw = true;
+ 		}
+ 	} else if (!strcmp(wordbeg, "title")) {
+ 		if (!custom_title || !*wordend)
+ 			return;
+ 		if (all) {
+-			Bar *first = NULL;
++			/* parse per bar: button offsets depend on each bar's font */
+ 			wl_list_for_each(bar, &bar_list, link) {
+-				if (first) {
+-					copy_customtext(&first->title, &bar->title);
+-				} else {
+-					parse_into_customtext(&bar->title, wordend);
+-					first = bar;
+-				}
++				parse_into_customtext(&bar->title, wordend, bar->font);
+ 				bar->redraw = true;
+ 			}
+ 		} else {
+-			parse_into_customtext(&bar->title, wordend);
++			parse_into_customtext(&bar->title, wordend, bar->font);
+ 			bar->redraw = true;
+ 		}
+ 	} else if (!strcmp(wordbeg, "show")) {
+@@ -1870,6 +1927,7 @@ main(int argc, char **argv)
+ 			if (++i >= argc)
+ 				DIE("Option -scale requires an argument");
+ 			buffer_scale = strtoul(argv[i], &argv[i] + strlen(argv[i]), 10);
++			scale_forced = true;
+ 		} else if (!strcmp(argv[i], "-v")) {
+ 			fprintf(stderr, PROGRAM " " VERSION "\n");
+ 			return 0;
+@@ -1894,18 +1952,16 @@ main(int argc, char **argv)
+ 	wl_display_roundtrip(display);
+ 	if (!compositor || !shm || !layer_shell || !output_manager || (ipc && !dwl_wm))
+ 		DIE("Compositor does not support all needed protocols");
++	/* get each output's initial scale before the bars are created */
++	wl_display_roundtrip(display);
+ 
+ 	/* Load selected font */
+ 	fcft_init(FCFT_LOG_COLORIZE_AUTO, 0, FCFT_LOG_CLASS_ERROR);
+ 	fcft_set_scaling_filter(FCFT_SCALING_FILTER_LANCZOS3);
+ 
+-	unsigned int dpi = 96 * buffer_scale;
+-	char buf[10];
+-	snprintf(buf, sizeof buf, "dpi=%u", dpi);
+-	if (!(font = fcft_from_name(1, (const char *[]) {fontstr}, buf)))
+-		DIE("Could not load font");
+-	textpadding = font->height / 2;
+-	height = font->height / buffer_scale + vertical_padding * 2;
++	if (buffer_scale < 1 || buffer_scale > MAX_SCALE)
++		buffer_scale = 1;
++	font_for_scale(buffer_scale);
+ 
+ 	/* Configure tag names */
+ 	if (!ipc && !tags) {
+@@ -1994,7 +2050,9 @@ main(int argc, char **argv)
+ 	if (ipc)
+ 		zdwl_ipc_manager_v2_destroy(dwl_wm);
+ 	
+-	fcft_destroy(font);
++	for (uint32_t i = 0; i <= MAX_SCALE; i++)
++		if (fonts[i])
++			fcft_destroy(fonts[i]);
+ 	fcft_fini();
+ 	
+ 	wl_shm_destroy(shm);
