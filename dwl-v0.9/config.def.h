@@ -141,10 +141,9 @@ static const enum libinput_config_tap_button_map button_map = LIBINPUT_CONFIG_TA
 /* commands */
 static const char *termcmd[] = { "foot", NULL };
 static const char *menucmd[] = {
-	"wmenu-run",
-	"-p", "run ",
+	"mew-run",
+	"-p", "run",
 	"-i",
-	"-f", "Terminus (TTF) 12",
 	"-l", "10",
 	NULL
 };
