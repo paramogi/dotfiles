@@ -1,0 +1,11 @@
+#!/bin/sh
+
+iface=wg0
+is_up() { ip link show "$iface" >/dev/null 2>&1; }
+
+case "$1" in
+  up)     doas wg-quick up   "$iface" ;;
+  down)   doas wg-quick down "$iface" ;;
+  toggle) is_up && doas wg-quick down "$iface" || doas wg-quick up "$iface" ;;
+  *)      echo "usage: vpn {up|down|toggle}"; exit 1 ;;
+esac
