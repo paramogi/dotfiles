@@ -85,6 +85,6 @@ static const struct arg args[] = {
 	{ run_command, "mic %s | ", "wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | awk '{ printf ($3 ? \"muted\" : \"on\") }'" },
 	{ wifi_essid, "%s ", "wlan0" },
 	{ wifi_perc, "%s%% | ", "wlan0" },
-	{ datetime, "%s", "%b %d %H:%M" },
+	{ datetime, "%s", "%a %b %d %H:%M" },
 	{ battery_notify, "", "BAT0" },
 };
