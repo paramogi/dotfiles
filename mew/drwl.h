@@ -230,6 +230,9 @@ drwl_text(Drwl *drwl,
 				p--;
 		}
 
+		if (cp == '\t')
+			cp = ' ';
+
 		glyph = fcft_rasterize_char_utf32(drwl->font, cp, fcft_subpixel_mode);
 		if (!glyph)
 			continue;
