@@ -34,6 +34,8 @@ static const char *const autostart[] = {
 	"darkman", "run", NULL,
 	"swaybg", "-i", "/home/mogi/Pictures/Wallpapers/moonlit_night_in_holland.jpg", NULL,
 	"sh", "-c", "swayidle -w timeout 120 '/home/mogi/.local/bin/lock; wlopm --off \"*\"' resume 'wlopm --on \"*\"'", NULL,
+	"wl-paste", "--watch", "cliphist", "store", NULL,
+	"wl-paste", "--type", "image", "--watch", "cliphist", "store", NULL,
 	"mako", NULL,
         NULL /* terminate */
 };
@@ -67,7 +69,7 @@ static const MonitorRule monrules[] = {
 	* All other numbers set the mode at the index n; 0 is the standard mode; see wlr-randr
 	*/
 	{ "eDP-1",    0.5f,  1, 2, &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL, -1, -1, 0, 0, 120.00f, 0, 1 },
-	{ NULL,       0.55f, 1, 1, &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL, -1, -1, 0, 0,   60.0f, 0, 0 },
+	{ NULL,       0.5f,  1, 1, &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL, -1, -1, 0, 0,   60.0f, 0, 0 },
 	/* default monitor rule: can be changed but cannot be eliminated; at least one monitor rule must exist */
 };
 
@@ -140,11 +142,13 @@ static const enum libinput_config_tap_button_map button_map = LIBINPUT_CONFIG_TA
 
 /* commands */
 static const char *termcmd[] = { "foot", NULL };
+/* j4-dmenu-desktop -d 'mew -p "run " -l 10 -i' --no-generic -t foot */
 static const char *menucmd[] = {
-	"mew-run",
-	"-p", "run",
-	"-i",
-	"-l", "10",
+	"j4-dmenu-desktop",
+	"-b",
+	"-t", "foot",
+	"--no-generic",
+	"-d", "mew -p 'run ' -l 10 -i",
 	NULL
 };
 
@@ -168,6 +172,7 @@ static const Key keys[] = {
 	{ MODKEY,                    XKB_KEY_f,           setlayout,        {.v = &layouts[1]} },
 	{ MODKEY,                    XKB_KEY_m,           setlayout,        {.v = &layouts[2]} },
 	{ MODKEY,                    XKB_KEY_x,           spawn,            {.v = lockcmd} },
+	{ MODKEY,                    XKB_KEY_c,           spawn,            SHCMD("cliphist list | mew -p 'clipboard history ' -i -l 10 | cliphist decode | wl-copy") },
 	{ MODKEY,                    XKB_KEY_space,       setlayout,        {0} },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_space,       togglefloating,   {0} },
 	{ MODKEY,                    XKB_KEY_e,           togglefullscreen, {0} },
