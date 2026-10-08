@@ -200,7 +200,7 @@ static const Key keys[] = {
 	{ 0, XKB_KEY_XF86MonBrightnessUp,   spawn, SHCMD("brightnessctl -q set 5%+") },
 	{ 0, XKB_KEY_XF86MonBrightnessDown, spawn, SHCMD("brightnessctl -q set 5%-") },
 	{ 0, XKB_KEY_Print,                 spawn, SHCMD("grim -g \"$(slurp)\" - | wl-copy --type image/png") },
-	{ WLR_MODIFIER_SHIFT,XKB_KEY_Print, spawn, SHCMD("grim -g \"$(slurp)\" - | tee ~/Pictures/Screenshots/$(date +'%d%m%Y-%H%M%S').png | wl-copy --type image/png") },
+	{ WLR_MODIFIER_SHIFT,XKB_KEY_Print, spawn, SHCMD("grim -g \"$(slurp)\" - | tee ~/Pictures/Screenshots/$(date +'%d-%m-%Y_%H:%M:%S').png | wl-copy --type image/png") },
 
 	/* Ctrl-Alt-Backspace and Ctrl-Alt-Fx used to be handled by X server */
 	{ WLR_MODIFIER_CTRL|WLR_MODIFIER_ALT,XKB_KEY_BackSpace, quit, {0} },
