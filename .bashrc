@@ -37,3 +37,5 @@ alias py='python3'
 
 export PATH=$PATH:/home/mogi/.local/bin
 export PATH=$PATH:/home/mogi/.cargo/bin
+
+[ "$TERM" = foot ] && cal
