@@ -1,0 +1,13 @@
+[user]
+    name = msleitao
+    email = miguelleitao59@gmail.com
+    signingKey = ~/.ssh/id_ed25519_work.pub
+[core]
+    editor = nvim
+    sshCommand = ssh -i ~/.ssh/id_ed25519_work -o IdentitiesOnly=yes
+[init]
+    defaultBranch = main
+[gpg]
+    format = ssh
+[commit]
+    gpgSign = true
