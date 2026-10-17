@@ -1,4 +1,12 @@
-[include]
-    path = ~/.gitconfig-personal
-[includeIf "gitdir:~/Perceptra/"]
-    path = ~/.gitconfig-work
+[user]
+    name = mogi
+    email = git@paramogi.world
+    signingKey = ~/.ssh/id_ed25519.pub
+[core]
+    editor = nvim
+[init]
+    defaultBranch = main
+[gpg]
+    format = ssh
+[commit]
+    gpgSign = true
