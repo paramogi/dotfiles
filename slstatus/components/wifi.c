@@ -31,7 +31,8 @@
 		while (p < e) {
 			struct nlattr nla;
 			memcpy(&nla, p, sizeof(nla));
-			if (nla.nla_type == attr) {
+			//if (nla.nla_type == attr) {
+      if ((nla.nla_type & NLA_TYPE_MASK) == attr) {
 				*len = nla.nla_len - NLA_HDRLEN;
 				return (char *)(p + NLA_HDRLEN);
 			}
