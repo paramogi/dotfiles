@@ -37,7 +37,8 @@ static const char *const autostart[] = {
 	"wl-paste", "--watch", "cliphist", "store", NULL,
 	"wl-paste", "--type", "image", "--watch", "cliphist", "store", NULL,
 	"mako", NULL,
-        NULL /* terminate */
+  "sh", "-c", "rm -rf /home/mogi/.cache/cliphist/db", NULL,
+  NULL /* terminate */
 };
 
 static const Rule rules[] = {
