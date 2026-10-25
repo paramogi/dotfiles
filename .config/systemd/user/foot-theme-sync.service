@@ -1,0 +1,13 @@
+# systemctl --user enable --now foot-theme-sync
+
+[Unit]
+Description=Sync foot color theme with system dark/light preference
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/.local/bin/foot-theme-sync
+Restart=on-failure
+
+[Install]
+WantedBy=graphical-session.target

@@ -1,0 +1,8 @@
+#!/sbin/openrc-run
+
+description="Sync foot color theme with system dark/light preference"
+
+supervisor=supervise-daemon
+command="/home/mogi/.local/bin/foot-theme-sync"
+output_log="/home/mogi/.cache/foot-theme-sync.log"
+error_log="/home/mogi/.cache/foot-theme-sync.log"
