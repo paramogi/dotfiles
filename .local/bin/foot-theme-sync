@@ -1,5 +1,5 @@
 #!/bin/sh
-# For Arch machine only
+# Arch machine only
 # Keep foot's color theme in sync with the system dark/light preference.
 # color-scheme values from xdg-desktop-portal: 1 = dark, 2 = light, 0 = no preference (treated as light)
 

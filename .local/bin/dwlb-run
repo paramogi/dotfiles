@@ -1,0 +1,25 @@
+#!/bin/sh
+mode=${1:-$(sed -n 's/^initial-color-theme=//p' "${XDG_CONFIG_HOME:-$HOME/.config}/foot/theme-mode.ini")}
+
+if [ "$mode" = light ]; then
+  set -- \
+    -inactive-fg-color '#1f1f1f' -inactive-bg-color '#fafafa' \
+    -occupied-fg-color '#1f1f1f' -occupied-bg-color '#fafafa' \
+    -active-fg-color '#fafafa' -active-bg-color '#1565c0' \
+    -urgent-fg-color '#fafafa' -urgent-bg-color '#fafafa' \
+    -middle-bg-color '#fafafa' -middle-bg-color-selected '#1565c0'
+else
+  mode=dark
+  set -- \
+    -inactive-fg-color '#bbbbbbff' -inactive-bg-color '#222222ff' \
+    -occupied-fg-color '#bbbbbbff' -occupied-bg-color '#222222ff' \
+    -active-fg-color '#eeeeeeff' -active-bg-color '#005577ff' \
+    -urgent-fg-color '#222222ff' -urgent-bg-color '#eeeeeeff' \
+    -middle-bg-color '#222222ff' -middle-bg-color-selected '#005577ff'
+fi
+
+echo "$$ $mode" >"$XDG_RUNTIME_DIR/dwlb.state"
+dwlb "$@" &
+sleep 0.3
+slstatus -s | dwlb -status-stdin all &
+wait

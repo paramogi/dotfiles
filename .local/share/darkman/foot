@@ -1,2 +1,14 @@
 #!/bin/sh
-exec "$HOME/.local/bin/foot-theme-sync" "$1"
+case "$1" in
+dark)
+  mode=dark
+  sig=USR1
+  ;;
+*)
+  mode=light
+  sig=USR2
+  ;;
+esac
+printf 'initial-color-theme=%s\n' "$mode" >"${XDG_CONFIG_HOME:-$HOME/.config}/foot/theme-mode.ini"
+pkill -"$sig" -x foot
+exit 0

@@ -25,8 +25,8 @@ static int log_level = WLR_ERROR;
 
 /* Autostart */
 static const char *const autostart[] = {
-	"dwlb", NULL,
-	"sh", "-c", "slstatus -s | dwlb -status-stdin all", NULL,
+  "/home/mogi/.local/bin/foot-theme-sync", NULL,
+  "/home/mogi/.local/bin/dwlb-run", NULL,
 	"pipewire", NULL,
 	"wireplumber", NULL,
 	"pipewire-pulse", NULL,

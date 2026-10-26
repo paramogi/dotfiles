@@ -1,0 +1,9 @@
+#!/bin/sh
+f="$XDG_RUNTIME_DIR/dwlb.state"
+[ -f "$f" ] && read -r pgid mode <"$f"
+
+# skip if already in that mode (darkman fires hooks at startup too)
+[ "$mode" = "$1" ] && kill -0 "$pgid" 2>/dev/null && exit 0
+
+[ -n "$pgid" ] && kill -- "-$pgid" 2>/dev/null
+setsid -f "$HOME/.local/bin/dwlb-run" "$1" >/dev/null 2>&1
