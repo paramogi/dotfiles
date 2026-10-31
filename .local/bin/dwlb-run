@@ -11,11 +11,11 @@ if [ "$mode" = light ]; then
 else
     mode=dark
     set -- \
-        -inactive-fg-color '#bbbbbbff' -inactive-bg-color '#222222ff' \
-        -occupied-fg-color '#bbbbbbff' -occupied-bg-color '#222222ff' \
-        -active-fg-color '#eeeeeeff' -active-bg-color '#005577ff' \
-        -urgent-fg-color '#222222ff' -urgent-bg-color '#eeeeeeff' \
-        -middle-bg-color '#222222ff' -middle-bg-color-selected '#005577ff'
+        -inactive-fg-color '#ffffff' -inactive-bg-color '#000000' \
+        -occupied-fg-color '#ffffff' -occupied-bg-color '#000000' \
+        -active-fg-color '#000000' -active-bg-color '#ffffff' \
+        -urgent-fg-color '#000000' -urgent-bg-color '#72dec2' \
+        -middle-bg-color '#000000' -middle-bg-color-selected '#ffffff'
 fi
 
 echo "$$ $mode" >"$XDG_RUNTIME_DIR/dwlb.state"
