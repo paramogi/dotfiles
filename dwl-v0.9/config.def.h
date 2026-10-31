@@ -61,17 +61,16 @@ static const Layout layouts[] = {
  * WARNING: negative values other than (-1, -1) cause problems with Xwayland clients due to
  * https://gitlab.freedesktop.org/xorg/xserver/-/issues/899 */
 static const MonitorRule monrules[] = {
-	/* name       mfact nmaster scale layout       rotate/reflect              x  y  resx resy rate      mode adaptive */
-	{ "eDP-1",    0.5f,  1,      2,   &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL, 0, 0, 0,   0,   120.000f, 1,   1},
-	/*
-	* mode let's the user decide on how dwl should implement the modes:
-	* -1 Sets a custom mode following the users choice
-	* All other number's set the mode at the index n, 0 is the standard mode; see wlr-randr
-	*/
-	{ NULL,       0.5f,  1,      1,   &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL, -1, -1, 0, 0, 0.0f, 0 ,1},
- 	/* default monitor rule: can be changed but cannot be eliminated; at least one monitor rule must exist */
+    /* name       mfact nmaster scale layout       rotate/reflect              x  y  resx resy rate      mode adaptive */
+    { "eDP-1",    0.5f,  1,      2,   &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL, 0, 0, 0,   0,   120.000f, 1,   0},
+    /*
+    * mode let's the user decide on how dwl should implement the modes:
+    * -1 Sets a custom mode following the users choice
+    * All other number's set the mode at the index n, 0 is the standard mode; see wlr-randr
+    */
+    { NULL,       0.5f,  1,      1,   &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL, -1, -1, 0, 0, 0.0f, 0, 0},
+    /* default monitor rule: can be changed but cannot be eliminated; at least one monitor rule must exist */
  };
- 
 
 
 /* keyboard */
