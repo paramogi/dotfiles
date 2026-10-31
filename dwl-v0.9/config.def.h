@@ -62,7 +62,7 @@ static const Layout layouts[] = {
  * https://gitlab.freedesktop.org/xorg/xserver/-/issues/899 */
 static const MonitorRule monrules[] = {
     /* name       mfact nmaster scale layout       rotate/reflect              x  y  resx resy rate      mode adaptive */
-    { "eDP-1",    0.5f,  1,      2,   &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL, 0, 0, 0,   0,   120.000f, 1,   0},
+    { "eDP-1",    0.5f,  1,      2,   &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL, 0, 0, 0,   0,   0,        0,   0},
     /*
     * mode let's the user decide on how dwl should implement the modes:
     * -1 Sets a custom mode following the users choice
