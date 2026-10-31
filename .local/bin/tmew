@@ -1,0 +1,10 @@
+#!/bin/sh
+mode=$(sed -n 's/^initial-color-theme=//p' "${XDG_CONFIG_HOME:-$HOME/.config}/foot/theme-mode.ini")
+
+if [ "$mode" = light ]; then
+    nb='#d7d7d7' nf='#000000'
+else
+    nb='#000000' nf='#ffffff'
+fi
+
+exec mew -nb "$nb" -nf "$nf" -sb '#72dec2' -sf '#000000' "$@"

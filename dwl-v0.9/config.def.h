@@ -148,7 +148,7 @@ static const char *menucmd[] = {
 	"-b",
 	"-t", "foot",
 	"--no-generic",
-	"-d", "mew -p 'run ' -l 10 -i",
+	"-d", "/home/mogi/.local/bin/tmew -p 'run ' -l 10 -i",
 	NULL
 };
 
@@ -172,7 +172,7 @@ static const Key keys[] = {
 	{ MODKEY,                    XKB_KEY_f,           setlayout,        {.v = &layouts[1]} },
 	{ MODKEY,                    XKB_KEY_m,           setlayout,        {.v = &layouts[2]} },
 	{ MODKEY,                    XKB_KEY_x,           spawn,            {.v = lockcmd} },
-	{ MODKEY,                    XKB_KEY_c,           spawn,            SHCMD("cliphist list | mew -p 'clipboard history ' -i -l 10 | cliphist decode | wl-copy") },
+	{ MODKEY,                    XKB_KEY_c,           spawn,            SHCMD("cliphist list | /home/mogi/.local/bin/tmew -p 'clipboard history ' -i -l 10 | cliphist decode | wl-copy") },
 	{ MODKEY,                    XKB_KEY_space,       setlayout,        {0} },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_space,       togglefloating,   {0} },
 	{ MODKEY,                    XKB_KEY_e,           togglefullscreen, {0} },
