@@ -25,20 +25,20 @@ static int log_level = WLR_ERROR;
 
 /* Autostart */
 static const char *const autostart[] = {
-  "/home/mogi/.local/bin/foot-theme-sync", NULL,
-  "/home/mogi/.local/bin/dwlb-run", NULL,
+    "/home/mogi/.local/bin/foot-theme-sync", NULL,
+    "/home/mogi/.local/bin/dwlb-run", NULL,
 	"pipewire", NULL,
 	"wireplumber", NULL,
 	"pipewire-pulse", NULL,
 	"dbus-update-activation-environment", "WAYLAND_DISPLAY", "XDG_CURRENT_DESKTOP", NULL,
+	"mako", NULL,
 	"darkman", "run", NULL,
 	"swaybg", "-i", "/home/mogi/Pictures/Wallpapers/moonlit_night_in_holland.jpg", NULL,
 	"sh", "-c", "swayidle -w timeout 120 '/home/mogi/.local/bin/lock; wlopm --off \"*\"' resume 'wlopm --on \"*\"'", NULL,
 	"wl-paste", "--watch", "cliphist", "store", NULL,
 	"wl-paste", "--type", "image", "--watch", "cliphist", "store", NULL,
-	"mako", NULL,
-  "sh", "-c", "rm -rf /home/mogi/.cache/cliphist/db", NULL,
-  NULL /* terminate */
+    "sh", "-c", "rm -rf /home/mogi/.cache/cliphist/db", NULL,
+    NULL /* terminate */
 };
 
 static const Rule rules[] = {
@@ -199,8 +199,8 @@ static const Key keys[] = {
 	{ 0, XKB_KEY_XF86AudioMicMute,      spawn, SHCMD("wpctl set-mute @DEFAULT_SOURCE@ toggle") },
 	{ 0, XKB_KEY_XF86MonBrightnessUp,   spawn, SHCMD("brightnessctl -q set 5%+") },
 	{ 0, XKB_KEY_XF86MonBrightnessDown, spawn, SHCMD("brightnessctl -q set 5%-") },
-	{ 0, XKB_KEY_Print,                 spawn, SHCMD("grim -g \"$(slurp)\" - | wl-copy --type image/png") },
-	{ WLR_MODIFIER_SHIFT,XKB_KEY_Print, spawn, SHCMD("grim -g \"$(slurp)\" - | tee ~/Pictures/Screenshots/$(date +'%d-%m-%Y_%H:%M:%S').png | wl-copy --type image/png") },
+    { 0, XKB_KEY_Print, spawn, SHCMD("g=$(slurp) || exit; f=${XDG_RUNTIME_DIR:-/tmp}/screenshot.png; grim -g \"$g\" \"$f\" && wl-copy --type image/png < \"$f\" && notify-send -i \"$f\" 'Screenshot copied'") },
+    { WLR_MODIFIER_SHIFT,XKB_KEY_Print, spawn, SHCMD("g=$(slurp) || exit; f=$HOME/Pictures/Screenshots/$(date +%Y%m%d-%H%M%S).png; grim -g \"$g\" \"$f\" && wl-copy --type image/png < \"$f\" && notify-send -i \"$f\" 'Screenshot saved' \"$f\"") },
 
 	/* Ctrl-Alt-Backspace and Ctrl-Alt-Fx used to be handled by X server */
 	{ WLR_MODIFIER_CTRL|WLR_MODIFIER_ALT,XKB_KEY_BackSpace, quit, {0} },

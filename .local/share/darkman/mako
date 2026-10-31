@@ -1,0 +1,6 @@
+#!/bin/sh
+case "$1" in
+    dark) makoctl mode -a dark ;;
+    *)    makoctl mode -r dark ;;
+esac
+exit 0
