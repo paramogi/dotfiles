@@ -77,16 +77,24 @@ const size_t notifiable_levels_count = sizeof(notifiable_levels) / sizeof(notifi
 static const struct arg args[] = {
 	/* function format          argument */
 	{ ram_perc, "ram %s%% | ", NULL },
+    // cpu
 	{ cpu_perc, "cpu %s%% ", NULL },
 	{ temp, "%s°C | ", "/sys/class/thermal/thermal_zone0/temp" },
+    // ---
+	{ run_command, "bri %s | ", "brightnessctl -m | cut -d, -f4" },
+    // vol + mic
+    { run_command, "vol %s ", "wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{ if ($3) print \"-\"; else printf \"%d%%\", $2*100 }'" },
+    { run_command, "mic %s | ", "wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | awk '{ printf ($3 ? \"-\" : \"on\") }'" },
+    // ---
+    { run_command, "bt %s | ", "bluetoothctl devices Connected | awk '{ $1 = $2 = \"\"; sub(/^ +/, \"\"); s = s ? s \",\" $0 : $0 } END { print s ? s : \"-\" }'" },
+    // wifi
+	{ wifi_essid, "%s ", "wlan0" },
+	{ wifi_perc, "%s%% | ", "wlan0" },
+    // ---
+    // battery
 	{ battery_state, "bat %s", "BAT0" },
 	{ battery_perc, "%s%% | ", "BAT0" },
 	{ battery_notify, "", "BAT0" },
-	{ run_command, "vol %s ", "wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{ if ($3) print \"-\"; else printf \"%d%%\", $2*100 }'" },
-	{ run_command, "mic %s | ", "wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | awk '{ printf ($3 ? \"-\" : \"on\") }'" },
-	{ run_command, "bri %s | ", "brightnessctl -m | cut -d, -f4" },
-    { run_command, "bt %s | ", "bluetoothctl devices Connected | awk '{ $1 = $2 = \"\"; sub(/^ +/, \"\"); s = s ? s \",\" $0 : $0 } END { print s ? s : \"-\" }'" },
-	{ wifi_essid, "%s ", "wlan0" },
-	{ wifi_perc, "%s%% | ", "wlan0" },
+    // ---
 	{ datetime, "%s", "%a %b %d %H:%M" },
 };
