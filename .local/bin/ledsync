@@ -1,0 +1,8 @@
+#!/bin/sh
+# set ThinkPad mute LEDs from PipeWire default sink/source state
+led() {
+    wpctl get-volume "$1" | grep -q MUTED && l=1 || l=0
+    brightnessctl -q -d "$2" set "$l"
+}
+led @DEFAULT_AUDIO_SINK@ platform::mute
+led @DEFAULT_AUDIO_SOURCE@ platform::micmute
