@@ -85,6 +85,7 @@ static const struct arg args[] = {
 	{ run_command, "vol %s ", "wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{ if ($3) print \"-\"; else printf \"%d%%\", $2*100 }'" },
 	{ run_command, "mic %s | ", "wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | awk '{ printf ($3 ? \"-\" : \"on\") }'" },
 	{ run_command, "bri %s | ", "brightnessctl -m | cut -d, -f4" },
+    { run_command, "bt %s | ", "bluetoothctl devices Connected | awk '{ $1 = $2 = \"\"; sub(/^ +/, \"\"); s = s ? s \",\" $0 : $0 } END { print s ? s : \"-\" }'" },
 	{ wifi_essid, "%s ", "wlan0" },
 	{ wifi_perc, "%s%% | ", "wlan0" },
 	{ datetime, "%s", "%a %b %d %H:%M" },
