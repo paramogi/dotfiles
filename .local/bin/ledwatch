@@ -1,7 +1,7 @@
 #!/bin/sh
 # keep ThinkPad mute LEDs in sync with PipeWire defaults
 until pactl info >/dev/null 2>&1; do sleep 1; done
-ledsync
+/home/mogi/.local/bin/ledsync
 pactl subscribe | while read -r _ _ _ type _; do
-    case $type in sink|source|server) ledsync ;; esac
+    case $type in sink | source | server) /home/mogi/.local/bin/ledsync ;; esac
 done
