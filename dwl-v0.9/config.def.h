@@ -7,7 +7,6 @@
 static const int sloppyfocus               = 1;  /* focus follows mouse */
 static const int bypass_surface_visibility = 1;  /* 1 means idle inhibitors will disable idle tracking even if it's surface isn't visible  */
 static const int follow                    = 1;  /* 1 means follow windows when sent to another tag */
-static const int hide_cursor_when_typing   = 1;
 static const unsigned int borderpx         = 1;  /* border pixel of windows */
 static const unsigned int snap             = 32; /* snap pixel */
 static const float rootcolor[]             = COLOR(0x222222ff);
@@ -127,6 +126,9 @@ LIBINPUT_CONFIG_TAP_MAP_LRM -- 1/2/3 finger tap maps to left/right/middle
 LIBINPUT_CONFIG_TAP_MAP_LMR -- 1/2/3 finger tap maps to left/middle/right
 */
 static const enum libinput_config_tap_button_map button_map = LIBINPUT_CONFIG_TAP_MAP_LRM;
+
+static const int cursor_timeout = 5;
+static const int hide_cursor_when_typing = 1;
 
 /* If you want to use the windows key for MODKEY, use WLR_MODIFIER_LOGO */
 #define MODKEY WLR_MODIFIER_LOGO
