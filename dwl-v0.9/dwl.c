@@ -162,6 +162,7 @@ typedef struct {
 	unsigned int bw;
 	uint32_t tags;
 	int isfloating, isurgent, isfullscreen;
+	int switchtotag;
 } Client;
 
 typedef struct {
@@ -267,6 +268,7 @@ typedef struct {
 	const char *id;
 	const char *title;
 	uint32_t tags;
+	bool switchtotag;
 	int isfloating;
 	int monitor;
 } Rule;
@@ -607,6 +609,11 @@ applyrules(Client *c)
 			wl_list_for_each(m, &mons, link) {
 				if (r->monitor == i++)
 					mon = m;
+			}
+			if (r->switchtotag && client_surface(c)->mapped) {
+				c->switchtotag = selmon->tagset[selmon->seltags];
+				mon->seltags ^= 1;
+				mon->tagset[selmon->seltags] = r->tags & TAGMASK;
 			}
 		}
 	}
@@ -3662,6 +3669,10 @@ unmapnotify(struct wl_listener *listener, void *data)
 	c->image_capture_source = NULL;
 	wlr_scene_node_destroy(&c->scene->node);
 	client_surface(c)->data = NULL;
+    if (c->switchtotag) {
+        Arg a = { .ui = c->switchtotag };
+        view(&a);
+    }
 	printstatus();
 	motionnotify(0, NULL, 0, 0, 0, 0);
 }
