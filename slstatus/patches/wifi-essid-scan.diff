@@ -1,0 +1,116 @@
+--- a/components/wifi.c	2026-11-06 00:07:24.098432637 +0000
++++ b/components/wifi.c	2026-11-06 00:07:40.478433611 +0000
+@@ -23,7 +23,7 @@
+ 
+ 	static int nlsock = -1;
+ 	static uint32_t seq = 1;
+-	static char resp[4096 + 1];
++	static char resp[32768 + 1];
+ 
+ 	static char *
+ 	findattr(int attr, const char *p, const char *e, size_t *len)
+@@ -126,11 +126,16 @@
+ 	const char *
+ 	wifi_essid(const char *interface)
+ 	{
++		static char ssid[33];
++		struct nlmsghdr hdr;
+ 		uint16_t fam = nl80211fam();
++		uint32_t status;
+ 		ssize_t r;
+-		size_t len;
++		size_t len, n;
+ 		char req[NLMSG_HDRLEN+GENL_HDRLEN+NLA_HDRLEN+NLA_ALIGN(4)] = {0}, *p = req;
++		char *e, *end, *bss, *bend, *a, *ie;
+ 		int idx = ifindex(interface);
++
+ 		if (!fam) {
+ 			fprintf(stderr, "nl80211 family not found\n");
+ 			return NULL;
+@@ -143,13 +148,13 @@
+ 		memcpy(p, &(struct nlmsghdr){
+ 			.nlmsg_len = sizeof(req),
+ 			.nlmsg_type = fam,
+-			.nlmsg_flags = NLM_F_REQUEST,
++			.nlmsg_flags = NLM_F_REQUEST|NLM_F_DUMP,
+ 			.nlmsg_seq = seq++,
+ 			.nlmsg_pid = 0,
+ 		}, sizeof(struct nlmsghdr));
+ 		p += NLMSG_HDRLEN;
+ 		memcpy(p, &(struct genlmsghdr){
+-			.cmd = NL80211_CMD_GET_INTERFACE,
++			.cmd = NL80211_CMD_GET_SCAN,
+ 			.version = 1,
+ 		}, sizeof(struct genlmsghdr));
+ 		p += GENL_HDRLEN;
+@@ -164,19 +169,58 @@
+ 			warn("send 'AF_NETLINK':");
+ 			return NULL;
+ 		}
+-		r = recv(nlsock, resp, sizeof(resp) - 1, 0);
+-		if (r < 0) {
+-			warn("recv 'AF_NETLINK':");
+-			return NULL;
++		*ssid = 0;
++		for (;;) {
++			r = recv(nlsock, resp, sizeof(resp) - 1, 0);
++			if (r < 0) {
++				warn("recv 'AF_NETLINK':");
++				return NULL;
++			}
++			for (p = resp; resp + r - p >= (ssize_t)NLMSG_HDRLEN; p = e) {
++				memcpy(&hdr, p, sizeof(hdr));
++				if (hdr.nlmsg_len < NLMSG_HDRLEN ||
++				    hdr.nlmsg_len > (size_t)(resp + r - p))
++					return NULL;
++				end = p + hdr.nlmsg_len;
++				e = p + NLMSG_ALIGN(hdr.nlmsg_len);
++
++				/* drain the whole dump, leftovers would break wifi_perc */
++				if (hdr.nlmsg_type == NLMSG_DONE ||
++				    hdr.nlmsg_type == NLMSG_ERROR)
++					return *ssid ? ssid : NULL;
++				if (*ssid || hdr.nlmsg_len <= NLMSG_HDRLEN+GENL_HDRLEN)
++					continue;
++
++				bss = findattr(NL80211_ATTR_BSS,
++				               p + NLMSG_HDRLEN + GENL_HDRLEN, end, &len);
++				if (!bss)
++					continue;
++				bend = bss + len;
++
++				a = findattr(NL80211_BSS_STATUS, bss, bend, &len);
++				if (!a || len != 4)
++					continue;
++				memcpy(&status, a, 4);
++				if (status != NL80211_BSS_STATUS_ASSOCIATED)
++					continue;
++
++				a = findattr(NL80211_BSS_INFORMATION_ELEMENTS, bss, bend, &len);
++				if (!a)
++					continue;
++				for (ie = a; ie + 2 <= a + len; ie += 2 + (unsigned char)ie[1]) {
++					n = (unsigned char)ie[1];
++					if (ie + 2 + n > a + len)
++						break;
++					if (ie[0] == 0) { /* SSID element */
++						if (n > 32)
++							n = 32;
++						memcpy(ssid, ie + 2, n);
++						ssid[n] = 0;
++						break;
++					}
++				}
++			}
+ 		}
+-
+-		if ((size_t)r <= NLMSG_HDRLEN + GENL_HDRLEN)
+-			return NULL;
+-		p = findattr(NL80211_ATTR_SSID, resp + NLMSG_HDRLEN + GENL_HDRLEN, resp + r, &len);
+-		if (p)
+-			p[len] = 0;
+-
+-		return p;
+ 	}
+ 
+ 	const char *
