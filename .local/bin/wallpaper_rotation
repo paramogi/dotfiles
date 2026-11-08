@@ -1,0 +1,20 @@
+#!/bin/sh
+# usage: wallrot [dir] [seconds]
+dir=${1:-$HOME/Pictures/Wallpapers}
+int=${2:-900}
+old= s=
+
+trap 'kill $old $s 2>/dev/null; exit' INT TERM
+
+while :; do
+    img=$(find "$dir" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) | shuf -n 1)
+    ln -sf "$img" "${XDG_RUNTIME_DIR:-/tmp}/wallpaper"
+    swaybg -m fill -i "$img" &
+    new=$!
+    sleep 1
+    [ -n "$old" ] && kill "$old"
+    old=$new
+    sleep "$int" &
+    s=$!
+    wait "$s"
+done

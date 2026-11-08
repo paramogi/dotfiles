@@ -1,0 +1,2 @@
+#!/bin/sh
+exec swaylock -f -u -s fill -i "${XDG_RUNTIME_DIR:-/tmp}/wallpaper"
