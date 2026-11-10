@@ -34,7 +34,12 @@ static const char *const autostart[] = {
 	"mako", NULL,
 	"darkman", "run", NULL,
 	"/home/mogi/.local/bin/wallpaper_rotation", "/home/mogi/Pictures/Wallpapers", "600", NULL,
-	"sh", "-c", "swayidle -w timeout 120 '/home/mogi/.local/bin/lock; wlopm --off \"*\"' resume 'wlopm --on \"*\"'", NULL,
+	"swayidle", "-w",
+    // swayidle and lock
+    "timeout", "120", "wlopm --off '*'",
+    "resume",         "wlopm --on '*'",
+    "timeout", "240", "/home/mogi/.local/bin/lock", NULL,
+    // ---
 	"wl-paste", "--watch", "cliphist", "store", NULL,
 	"wl-paste", "--type", "image", "--watch", "cliphist", "store", NULL,
     "sh", "-c", "rm -rf /home/mogi/.cache/cliphist/db", NULL,
