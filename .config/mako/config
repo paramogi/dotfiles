@@ -3,6 +3,7 @@ text-color=#000000
 border-color=#000000
 progress-color=over #efefef
 default-timeout=5000
+layer=overlay
 
 [mode=dark]
 background-color=#000000
