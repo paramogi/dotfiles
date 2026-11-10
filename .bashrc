@@ -35,6 +35,10 @@ alias gl='git log'
 
 alias py='python3'
 
+alias wifi='impala'
+alias bt='bluetui'
+alias disk='gdu'
+
 export PATH=$PATH:/home/mogi/.local/bin
 export PATH=$PATH:/home/mogi/.cargo/bin
 
