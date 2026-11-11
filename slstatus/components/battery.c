@@ -21,7 +21,7 @@
 	#define POWER_SUPPLY_CURRENT  "/sys/class/power_supply/%s/current_now"
 	#define POWER_SUPPLY_POWER    "/sys/class/power_supply/%s/power_now"
 
-	const char notify_cmd[] = "notify-send";
+	const char notify_cmd[] = "notify-send -u critical";
 	const char battery_str[] = "Battery";
 	int last_notified_level = 0;
 
@@ -77,7 +77,7 @@ const char *battery_notify(const char *bat)
 	if (strcmp("Discharging", state) != 0)
 		return NULL;
 
-	char cmd[28];
+	char cmd[64];
 
 	for (size_t i = 0; i < notifiable_levels_count; i++) {
 		if (notifiable_levels[i] != cap_perc)
