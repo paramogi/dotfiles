@@ -99,7 +99,7 @@ static const struct arg args[] = {
 	{ temp,           "%s°C | ",     "/sys/class/thermal/thermal_zone0/temp",   1,  -1 },
 	{ run_command,    "bri %s | ",   "brightnessctl -m | cut -d, -f4",          0,   1 },
 	{ run_command,    "vol %s ",     "wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{ if ($3) print \"-\"; else printf \"%d%%\", $2*100 }'",                      0,   2 },
-	{ run_command,    "mic %s |",    "wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | awk '{ printf ($3 ? \"-\" : \"on\") }'",                    0,   2 },
+    { run_command,    "mic %s |", "wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | awk '{ printf ($3 ? \"-\" : \"^bg(72dec2)^fg(000000) on ^fg()^bg()\") }'", 0, 2 },
 	{ run_command,    "%s",          "bluetoothctl devices Connected | awk '{ $1 = $2 = \"\"; sub(/^ +/, \"\"); s = s ? s \",\" $0 : $0 } END { print s ? \" bt \" s \" | \" : \" \" }'",   0,   3 },
 	{ wifi,           "%s",          "wlan0",                                  10,   4 },
 	{ battery_state,  "bat %s",      "BAT0",                                   30,   5 },
