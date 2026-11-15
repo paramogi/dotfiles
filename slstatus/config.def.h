@@ -1,13 +1,13 @@
 /* See LICENSE file for copyright and license details. */
 
 /* interval between updates (in ms) */
-const unsigned int interval = 500;
+const unsigned int interval = 1000;
 
 /* text to show if no value can be retrieved */
 static const char unknown_str[] = "n/a";
 
-/* maximum output string length */
-#define MAXLEN 2048
+/* maximum command output length */
+#define CMDLEN 128
 
 /* battery levels to notify - add any levels you want to receive notification for (in percent) */
 const int notifiable_levels[] = {
@@ -75,26 +75,22 @@ const size_t notifiable_levels_count = sizeof(notifiable_levels) / sizeof(notifi
  * wifi_perc           WiFi signal in percent          interface name (wlan0)
  */
 static const struct arg args[] = {
-	/* function format          argument */
-	{ ram_perc, "ram %s%% | ", NULL },
-    // cpu
-	{ cpu_perc, "cpu %s%% ", NULL },
-	{ temp, "%s°C | ", "/sys/class/thermal/thermal_zone0/temp" },
-    // ---
-	{ run_command, "bri %s | ", "brightnessctl -m | cut -d, -f4" },
-    // vol + mic
-    { run_command, "vol %s ", "wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{ if ($3) print \"-\"; else printf \"%d%%\", $2*100 }'" },
-    { run_command, "mic %s |", "wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | awk '{ printf ($3 ? \"-\" : \"on\") }'" },
-    // ---
-    { run_command, "%s", "bluetoothctl devices Connected | awk '{ $1 = $2 = \"\"; sub(/^ +/, \"\"); s = s ? s \",\" $0 : $0 } END { print s ? \" bt \" s \" | \" : \" \" }'" },
-    // wifi
-	{ wifi_essid, "%s ", "wlan0" },
-	{ wifi_perc, "%s%% | ", "wlan0" },
-    // ---
-    // battery
-	{ battery_state, "bat %s", "BAT0" },
-	{ battery_perc, "%s%% | ", "BAT0" },
-	{ battery_notify, "", "BAT0" },
-    // ---
-	{ datetime, "%s", "%a %b %d %H:%M" },
+	/* function       format         argument                                  turn signal */
+	{ ram_perc,       "ram %s%% | ", NULL,                                      5,  -1 },
+	{ cpu_perc,       "cpu %s%% ",   NULL,                                      2,  -1 },
+	{ temp,           "%s°C | ",     "/sys/class/thermal/thermal_zone0/temp",   5,  -1 },
+	{ run_command,    "bri %s | ",   "brightnessctl -m | cut -d, -f4",          0,   1 },
+	{ run_command,    "vol %s ",     "wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{ if ($3) print \"-\"; else printf \"%d%%\", $2*100 }'",                      0,   2 },
+	{ run_command,    "mic %s |",    "wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | awk '{ printf ($3 ? \"-\" : \"on\") }'",                    0,   2 },
+	{ run_command,    "%s",          "bluetoothctl devices Connected | awk '{ $1 = $2 = \"\"; sub(/^ +/, \"\"); s = s ? s \",\" $0 : $0 } END { print s ? \" bt \" s \" | \" : \" \" }'",   2,   3 },
+	{ wifi_essid,     "%s ",         "wlan0",                                  10,   4 },
+	{ wifi_perc,      "%s%% | ",     "wlan0",                                  10,   4 },
+	{ battery_state,  "bat %s",      "BAT0",                                   30,   5 },
+	{ battery_perc,   "%s%% ",       "BAT0",                                   30,   5 },
+	{ battery_notify, "",            "BAT0",                                   30,   5 },
+	{ run_command,    "%s | ",       "read p < /sys/firmware/acpi/platform_profile; case $p in performance) echo '>';; balanced) echo =;; low-power) echo '<';; *) echo ?;; esac",        10,   6 },
+	{ datetime,       "%s",          "%a %b %d %H:%M",                          1,  -1 },
 };
+
+/* maximum output string length */
+#define MAXLEN CMDLEN * LEN(args)

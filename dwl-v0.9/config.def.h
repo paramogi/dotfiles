@@ -200,13 +200,13 @@ static const Key keys[] = {
 	TAGKEYS(                     XKB_KEY_9,           8),
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_q,           quit,             {0} },
 
-    { 0, XKB_KEY_XF86AudioRaiseVolume,  spawn, SHCMD("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+") },
-    { 0, XKB_KEY_XF86AudioLowerVolume,  spawn, SHCMD("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-") },
-    { 0, XKB_KEY_XF86AudioMute,         spawn, SHCMD("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle") },
-    { 0, XKB_KEY_XF86AudioMicMute,      spawn, SHCMD("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle") },
-	{ 0, XKB_KEY_XF86MonBrightnessUp,   spawn, SHCMD("brightnessctl -q set 5%+") },
-	{ 0, XKB_KEY_XF86MonBrightnessDown, spawn, SHCMD("brightnessctl -q set 5%-") },
-    { 0, XKB_KEY_Print, spawn, SHCMD("g=$(slurp) || exit; f=${XDG_RUNTIME_DIR:-/tmp}/screenshot.png; grim -g \"$g\" \"$f\" && wl-copy --type image/png < \"$f\" && notify-send -i \"$f\" 'Screenshot copied'") },
+    { 0, XKB_KEY_XF86AudioRaiseVolume,  spawn, SHCMD("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+; pkill -RTMIN+2 slstatus") },
+    { 0, XKB_KEY_XF86AudioLowerVolume,  spawn, SHCMD("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-; pkill -RTMIN+2 slstatus") },
+    { 0, XKB_KEY_XF86AudioMute,         spawn, SHCMD("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle; pkill -RTMIN+2 slstatus") },
+    { 0, XKB_KEY_XF86AudioMicMute,      spawn, SHCMD("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle; pkill -RTMIN+2 slstatus") },
+	{ 0, XKB_KEY_XF86MonBrightnessUp,   spawn, SHCMD("brightnessctl -q set 5%+; pkill -RTMIN+1 slstatus") },
+	{ 0, XKB_KEY_XF86MonBrightnessDown, spawn, SHCMD("brightnessctl -q set 5%-; pkill -RTMIN+1 slstatus") },
+    { 0, XKB_KEY_Print,                 spawn, SHCMD("g=$(slurp) || exit; f=${XDG_RUNTIME_DIR:-/tmp}/screenshot.png; grim -g \"$g\" \"$f\" && wl-copy --type image/png < \"$f\" && notify-send -i \"$f\" 'Screenshot copied'") },
     { WLR_MODIFIER_SHIFT,XKB_KEY_Print, spawn, SHCMD("g=$(slurp) || exit; f=$HOME/Pictures/Screenshots/$(date +%Y%m%d-%H%M%S).png; grim -g \"$g\" \"$f\" && wl-copy --type image/png < \"$f\" && notify-send -i \"$f\" 'Screenshot saved' \"$f\"") },
 
 	/* Ctrl-Alt-Backspace and Ctrl-Alt-Fx used to be handled by X server */
