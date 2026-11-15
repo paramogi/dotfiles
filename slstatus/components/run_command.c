@@ -27,5 +27,5 @@ run_command(const char *cmd)
 	if ((p = strrchr(buf, '\n')))
 		p[0] = '\0';
 
-	return buf[0] ? buf : NULL;
+	return buf;
 }

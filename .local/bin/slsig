@@ -1,0 +1,12 @@
+#!/bin/sh
+dbus-monitor --system \
+    "type='signal',sender='org.bluez',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged',arg0='org.bluez.Device1'" \
+    "type='signal',path='/org/freedesktop/UPower/PowerProfiles',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged',arg0='org.freedesktop.UPower.PowerProfiles'" \
+    "type='signal',sender='net.connman.iwd',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged',arg0='net.connman.iwd.Station'" |
+    while read -r line; do
+        case $line in
+        *'"Connected"'*) pkill -RTMIN+3 slstatus ;;
+        *'"ActiveProfile"'*) pkill -RTMIN+6 slstatus ;;
+        *'"State"'*) pkill -RTMIN+4 slstatus ;;
+        esac
+    done

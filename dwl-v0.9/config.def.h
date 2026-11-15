@@ -43,6 +43,7 @@ static const char *const autostart[] = {
 	"wl-paste", "--watch", "cliphist", "store", NULL,
 	"wl-paste", "--type", "image", "--watch", "cliphist", "store", NULL,
     "sh", "-c", "rm -rf /home/mogi/.cache/cliphist/db", NULL,
+    "/home/mogi/.local/bin/slsig", NULL,
     NULL /* terminate */
 };
 
