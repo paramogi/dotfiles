@@ -5,13 +5,14 @@
 # If not running interactively, don't do anything
 [[ $- != *i* ]] && return
 
-alias ls='ls --color=auto'
 alias grep='grep --color=auto'
 
 PS1='\[\e[48;2;114;222;194m\e[38;2;0;0;0m\] \w \[\e[0m\] \$ '
 PS1='$(ip link show wg0 >/dev/null 2>&1 && printf "\001\033[7m\002[vpn]\001\033[0m\002 ")'"$PS1"
 
 # Put your fun stuff here.
+alias ls='ls --color=auto -F'
+alias ll='ls -lah'
 
 alias so='source'
 
